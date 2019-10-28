@@ -3,8 +3,6 @@
 
 NidayandHelper::NidayandHelper(){
   this->_configfile = "/config.json";
-  this->_mqttclientid = ("ESPClient-" + String(ESP.getChipId()));
-
 }
 
 boolean NidayandHelper::loadconfig(){
@@ -55,68 +53,6 @@ boolean NidayandHelper::saveconfig(JsonVariant json){
   json.printTo(Serial);
   Serial.println();
   return true;
-}
-
-String NidayandHelper::mqtt_gettopic(String type) {
-  return "/raw/esp8266/" + String(ESP.getChipId()) + "/" + type;
-}
-
-
-void NidayandHelper::mqtt_reconnect(PubSubClient& psclient){
-  return mqtt_reconnect(psclient, String(NULL), String(NULL));
-}
-void NidayandHelper::mqtt_reconnect(PubSubClient& psclient, std::list<const char*> topics){
-  return mqtt_reconnect(psclient, String(NULL), String(NULL), topics);
-}
-void NidayandHelper::mqtt_reconnect(PubSubClient& psclient, String uid, String pwd){
-  std::list<const char*> mylist;
-  return mqtt_reconnect(psclient, uid, pwd, mylist);
-}
-void NidayandHelper::mqtt_reconnect(PubSubClient& psclient, String uid, String pwd, std::list<const char*> topics){
-  // Loop until we're reconnected
-  boolean mqttLogon = false;
-  if (uid!=NULL and pwd != NULL){
-    mqttLogon = true;
-  }
-  while (!psclient.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    if ((mqttLogon ? psclient.connect(this->_mqttclientid.c_str(), uid.c_str(), pwd.c_str()) : psclient.connect(this->_mqttclientid.c_str()))) {
-      Serial.println("connected");
-
-      //Send register MQTT message with JSON of chipid and ip-address
-      this->mqtt_publish(psclient, "/raw/esp8266/register", "{ \"id\": \"" + String(ESP.getChipId()) + "\", \"ip\":\"" + WiFi.localIP().toString() +"\"}");
-
-      //Setup subscription
-      if (!topics.empty()){
-        for (const char* t : topics){
-           psclient.subscribe(t);
-           Serial.println("Subscribed to "+String(t));
-        }
-      }
-
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(psclient.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      ESP.wdtFeed();
-      delay(5000);
-    }
-  }
-  if (psclient.connected()){
-    psclient.loop();
-  }
-}
-
-void NidayandHelper::mqtt_publish(PubSubClient& psclient, String topic, String payload){
-  Serial.println("Trying to send msg..."+topic+":"+payload);
-  //Send status to MQTT bus if connected
-  if (psclient.connected()) {
-    psclient.publish(topic.c_str(), payload.c_str());
-  } else {
-    Serial.println("PubSub client is not connected...");
-  }
 }
 
 void NidayandHelper::resetsettings(WiFiManager& wifim){

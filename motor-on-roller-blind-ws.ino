@@ -1,7 +1,6 @@
 #include <Stepper_28BYJ_48.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
-#include <PubSubClient.h>
 #include <WiFiUdp.h>
 #include <WiFiManager.h>
 #include <ArduinoJson.h>
@@ -13,6 +12,8 @@
 #include "NidayandHelper.h"
 #include "index_html.h"
 
+#include "mymqtt.h"
+
 //--------------- CHANGE PARAMETERS ------------------
 //Configure Default Settings for Access Point logon
 String APid = "BlindsConnectAP";    //Name of access point
@@ -23,11 +24,17 @@ String APpw = "nidayand";           //Hardcoded password for access point
 // Version number for checking if there are new code releases and notifying the user
 String version = "1.3.1";
 
+
+
 NidayandHelper helper = NidayandHelper();
 
 //Fixed settings for WIFI
 WiFiClient espClient;
-PubSubClient psclient(espClient);   //MQTT client
+
+
+MyMqtt myMqtt;
+
+
 char mqtt_server[40];             //WIFI config: MQTT server config (optional)
 char mqtt_port[6] = "1883";       //WIFI config: MQTT port config (optional)
 char mqtt_uid[40];             //WIFI config: MQTT server username (optional)
@@ -50,6 +57,7 @@ bool shouldSaveConfig = false;      //Used for WIFI Manager callback to save par
 boolean initLoop = true;            //To enable actions first time the loop is run
 boolean ccw = true;                 //Turns counter clockwise to lower the curtain
 
+// Use NodeMCU 1.0 will define the ports
 Stepper_28BYJ_48 small_stepper(D1, D3, D2, D4); //Initiate stepper driver
 
 ESP8266WebServer server(80);              // TCP server at port 80 will respond to HTTP requests
@@ -101,7 +109,7 @@ void sendmsg(String topic, String payload) {
   if (!mqttActive)
     return;
 
-  helper.mqtt_publish(psclient, topic, payload);
+  myMqtt.publish(topic, payload);
 }
 
 
@@ -242,16 +250,14 @@ void handleNotFound(){
 
 void setup(void)
 {
+  PubSubClient* pSPClient = dynamic_cast<PubSubClient*>(&espClient);
+  myMqtt.setPubSubClient(pSPClient);
   Serial.begin(115200);
   delay(100);
   Serial.print("Starting now\n");
 
   //Reset the action
   action = "";
-
-  //Set MQTT properties
-  outputTopic = helper.mqtt_gettopic("out");
-  inputTopic = helper.mqtt_gettopic("in");
 
   //Set the WIFI hostname
   WiFi.hostname(config_name);
@@ -267,6 +273,8 @@ void setup(void)
   WiFiManagerParameter custom_text2("<script>t = document.createElement('div');t2 = document.createElement('input');t2.setAttribute('type', 'checkbox');t2.setAttribute('id', 'tmpcheck');t2.setAttribute('style', 'width:10%');t2.setAttribute('onclick', \"if(document.getElementById('Rotation').value == 'false'){document.getElementById('Rotation').value = 'true'} else {document.getElementById('Rotation').value = 'false'}\");t3 = document.createElement('label');tn = document.createTextNode('Clockwise rotation');t3.appendChild(t2);t3.appendChild(tn);t.appendChild(t3);document.getElementById('Rotation').style.display='none';document.getElementById(\"Rotation\").parentNode.insertBefore(t, document.getElementById(\"Rotation\"));</script>");
   //Setup WIFI Manager
   WiFiManager wifiManager;
+
+  //wifiManager.resetSettings();
 
   //reset settings - for testing
   //clean FS, for testing
@@ -350,8 +358,8 @@ void setup(void)
   */
   if (String(mqtt_server) != ""){
     Serial.println("Registering MQTT server");
-    psclient.setServer(mqtt_server, String(mqtt_port).toInt());
-    psclient.setCallback(mqttCallback);
+    myMqtt.setServer(mqtt_server, String(mqtt_port).toInt());
+    myMqtt.setCallback(mqttCallback);
 
   } else {
     mqttActive = false;
@@ -414,8 +422,10 @@ void loop(void)
 
   //MQTT client
   if (mqttActive){
-    helper.mqtt_reconnect(psclient, mqtt_uid, mqtt_pwd, { inputTopic.c_str() });
+    myMqtt.reconnect(mqtt_uid, mqtt_pwd, { inputTopic.c_str() });
   }
+
+  myMqtt.run();
 
 
   /**
@@ -450,13 +460,18 @@ void loop(void)
     } else {
       path = 0;
       action = "";
-      int set = (setPos * 100)/maxPosition;
-      int pos = (currentPosition * 100)/maxPosition;
-      webSocket.broadcastTXT("{ \"set\":"+String(set)+", \"position\":"+String(pos)+" }");
-      sendmsg(outputTopic, "{ \"set\":"+String(set)+", \"position\":"+String(pos)+" }");
       Serial.println("Stopped. Reached wanted position");
       saveItNow = true;
     }
+    static int prevPos = 0;
+    int set = (setPos * 100)/maxPosition;
+    int pos = (currentPosition * 100)/maxPosition;
+    if (pos != prevPos)
+    {
+      webSocket.broadcastTXT("{ \"set\":"+String(set)+", \"position\":"+String(pos)+" }");
+      sendmsg(outputTopic, "{ \"set\":"+String(set)+", \"position\":"+String(pos)+" }");
+    }
+    prevPos = pos;    
 
  } else if (action == "manual" && path != 0) {
     /*

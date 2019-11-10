@@ -13,28 +13,56 @@ MyMqtt::MyMqtt()
 : m_pPsclient(0)
 , m_topicIn()
 , m_topicOut()
-, m_mqttClientId("ESPClient-" + String(ESP.getChipId()))
-, m_mqttHeartbeatTicker()
+, m_clientId("ESPClient-" + String(ESP.getChipId()))
+, m_userId()
+, m_password()
+, m_lastMsg()
+, m_heartbeatTicker()
 {
     setTopics();
     
-    m_mqttHeartbeatTicker.attach(60, setPublishState);
-
+    m_heartbeatTicker.attach(60, setPublishState);
 }
 
-void MyMqtt::setPubSubClient(PubSubClient* pWifiClient)
+void MyMqtt::setPubSubClient(PubSubClient& wifiClient)
 {
-    m_pPsclient = pWifiClient;
+  m_pPsclient = &wifiClient;
 }
 
 void MyMqtt::setServer(const char * domain, uint16_t port)
 {
-    m_pPsclient->setServer(domain, port);
+  if (!m_pPsclient)
+  {
+    Serial.println("m_pPsClient = NULL");
+    return;
+  }
+  m_pPsclient->setServer(domain, port);
+}
+
+void MyMqtt::setClientID(String clientID)
+{
+  m_clientId = clientID;
+  setTopics();
+}
+
+void MyMqtt::setUID(String userID)
+{
+  m_userId = userID;
+}
+
+void MyMqtt::setPassword(String password)
+{
+  m_password = password;
 }
 
 void MyMqtt::setCallback(MQTT_CALLBACK_SIGNATURE)
 {
-    m_pPsclient->setCallback(callback);
+  if (!m_pPsclient)
+  {
+    Serial.println("m_pPsClient = NULL");
+    return;
+  }
+  m_pPsclient->setCallback(callback);
 }
 
 void MyMqtt::reconnect()
@@ -48,10 +76,17 @@ void MyMqtt::reconnect(std::list<const char*> topics)
 void MyMqtt::reconnect(String uid, String pwd)
 {
   std::list<const char*> mylist;
+  mylist.push_back(m_topicIn.c_str());
   reconnect(uid, pwd, mylist);
 }
 
-void MyMqtt::reconnect(String uid, String pwd, std::list<const char*> topics){
+void MyMqtt::reconnect(String uid, String pwd, std::list<const char*> topics)
+{
+  if (!m_pPsclient)
+  {
+    Serial.println("m_pPsClient = NULL");
+    return;
+  }
   // Loop until we're reconnected
   boolean mqttLogon = false;
   if (uid!=NULL and pwd != NULL)
@@ -63,8 +98,8 @@ void MyMqtt::reconnect(String uid, String pwd, std::list<const char*> topics){
   {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if ((mqttLogon ? m_pPsclient->connect(m_mqttClientId.c_str(), uid.c_str(), pwd.c_str())
-                   : m_pPsclient->connect(m_mqttClientId.c_str()))) 
+    if ((mqttLogon ? m_pPsclient->connect(m_clientId.c_str(), uid.c_str(), pwd.c_str())
+                   : m_pPsclient->connect(m_clientId.c_str()))) 
     {
       Serial.println("connected");
 
@@ -78,7 +113,6 @@ void MyMqtt::reconnect(String uid, String pwd, std::list<const char*> topics){
            Serial.println("Subscribed to "+String(t));
         }
       }
-
     } 
     else 
     {
@@ -96,7 +130,15 @@ void MyMqtt::reconnect(String uid, String pwd, std::list<const char*> topics){
   }
 }
 
-void MyMqtt::publish(String topic, String payload){
+void MyMqtt::publish(String topic, String payload)
+{
+  m_lastMsg = payload;
+  if (!m_pPsclient)
+  {
+    Serial.println("m_pPsClient = NULL");
+    return;
+  }
+
   Serial.println("Trying to send msg..."+topic+":"+payload);
   //Send status to MQTT bus if connected
   if (m_pPsclient->connected()) 
@@ -109,14 +151,22 @@ void MyMqtt::publish(String topic, String payload){
   }
 }
 
+void MyMqtt::publish(String payload)
+{
+  publish(m_topicOut, payload);
+}
+
 void MyMqtt::run()
 {
+    // Reconnect if needed
+    reconnect(m_userId, m_password);
+
     // State Publish if needed
     if (publishStatePending)
     {
-        Serial.println("Ticker...");
+        Serial.println("Mqtt ticker...");
         MyMqtt::publishStatePending = false;
-        // TODO: Publish the topic
+        publish(m_lastMsg);
     }
 }
 
@@ -124,7 +174,7 @@ void MyMqtt::setTopics()
 {
     // TODO: If name...
     // else
-    String baseTopic = "/raw/esp8266/" + String(ESP.getChipId()) + "/";
+    String baseTopic = "/raw/blind/" + m_clientId + "/";
     m_topicIn = baseTopic + "in";
     m_topicOut = baseTopic + "out";
 }

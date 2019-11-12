@@ -42,6 +42,9 @@ public:
   //! @return the current target position [0, 100]
   uint8_t getTargetPosition();
 
+  //! @return Steps to current position
+  long getStep();
+
   //! @return Num of steps from closed to open
   long getMaxStep();
 
@@ -66,7 +69,9 @@ public:
 
   void stop();
 
-  void setPosUpdateCallback(void (*)(int, int));
+  void setPosUpdateCallback(void (*callback)(int, int));
+
+  void setReachedTargetCallback(void (*callback)(void));
 
   //! Main loop of this component
   //! This function will drive the movement of the blind
@@ -77,6 +82,8 @@ private:
 
   //! Step the motor. If not allowed to step (Not in [0, 100]) return false
   bool step(long steps);
+
+  void calculatePosition();
 
   Stepper_28BYJ_48 m_stepper;
 
@@ -100,6 +107,7 @@ private:
   Direction m_dir;
 
   void (*m_posUpdateCallback)(int, int);
+  void (*m_reachedTargetCallback)(void);
 };
 
 }

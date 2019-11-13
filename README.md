@@ -1,3 +1,5 @@
+# OBS. This project has been completely rebuilt from the button up! Although this README is not revised. Most of the functionality described should still apply. Original project by nidayand
+
 **This repo has been archived as a complete redesign is on its way - including physical components**
 
 # motor-on-roller-blind-ws

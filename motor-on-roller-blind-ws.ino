@@ -1,18 +1,28 @@
-#include <Stepper_28BYJ_48.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
-#include <WiFiManager.h>
-#include <ArduinoJson.h>
-#include "FS.h"
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <WebSocketsServer.h>
 #include <ArduinoOTA.h>
-#include "NidayandHelper.h"
-#include "index_html.h"
+#include <ESP8266mDNS.h>
+#include <ESP8266WiFi.h>
+#include <WebSocketsServer.h>
+#include <WiFiClient.h>
 
+// philsson
+#include "blind.h"
+#include "config.h"
 #include "mymqtt.h"
+#include "utilities.h"
+#include "webserver.h"
+
+// Comment in to use reset button. 
+// OBS! Will not work properly if motor uses D1-D4 (One of the IOs collide)
+// #define USE_RESET_BTN
+
+// Comment in to reset configuration
+// For manual triggering. Restore after usage (Requires reflashing before and after)
+// #define RESET_CONFIG
+
+using namespace ::philsson::blind;
+using namespace ::philsson::config;
+using namespace ::philsson::mqtt;
+using namespace ::philsson::utilities;
 
 //--------------- CHANGE PARAMETERS ------------------
 //Configure Default Settings for Access Point logon
@@ -21,370 +31,283 @@ String APpw = "nidayand";           //Hardcoded password for access point
 
 //----------------------------------------------------
 
-// Version number for checking if there are new code releases and notifying the user
-String version = "1.3.1";
+String version = "1.3.1"; // Not relevant with this Fork (Will not follow master)
 
-
-
-NidayandHelper helper = NidayandHelper();
-
-//Fixed settings for WIFI
+// WiFi and Mqtt
 WiFiClient espClient;
 
+// Configuration in web interface
+// Connect or fallback to AP
+WiFiManager wifiManager;
 
+// Publisher and subscriber used by Mqtt
+PubSubClient psClient(espClient);
+
+// WebSockets will respond on port 81
+WebSocketsServer webSocket = WebSocketsServer(81); 
+
+// Philsson components
 MyMqtt myMqtt;
+ConfigManager configManager;
+Blind blind;
+WebServer& webServer = WebServer::instance();
+
+#ifdef USE_RESET_BTN
+  ResetButton resetButton; // Not usable with motor on D1-D4
+#endif
 
 
-char mqtt_server[40];             //WIFI config: MQTT server config (optional)
-char mqtt_port[6] = "1883";       //WIFI config: MQTT port config (optional)
-char mqtt_uid[40];             //WIFI config: MQTT server username (optional)
-char mqtt_pwd[40];             //WIFI config: MQTT server password (optional)
+//! Callback function to be called when the button is pressed.
+void onButtonReset() 
+{
+    Serial.println("Reset has been triggered by button!");
+    configManager.reset();
+}
 
-String outputTopic;               //MQTT topic for sending messages
-String inputTopic;                //MQTT topic for listening
-boolean mqttActive = true;
-char config_name[40];             //WIFI config: Bonjour name of device
-char config_rotation[40] = "false"; //WIFI config: Detault rotation is CCW
+//! Position update (position and target position) to webserver and mqtt
+//! @param currentPosition Position in % [0, 100]
+//! @param targetPosition Target position in % [0, 100]
+//! @param clientNum Client ID. Calculated by the web server. 0 if localhost
+void sendPosUpdate(int currentPosition, int targetPosition, uint8_t clientNum)
+{
+  String pubString = "{ \"set\":"+String(targetPosition)+", \"position\":"+String(currentPosition)+" }";
+  myMqtt.publish(pubString);
+  webSocket.sendTXT(clientNum, pubString);
+}
+void sendPosUpdate(int currentPosition, int targetPosition)
+{
+  sendPosUpdate(currentPosition, targetPosition, 0);
+}
+void sendPosUpdate(uint8_t clientNum = 0)
+{
+  sendPosUpdate(blind.getPosition(), blind.getTargetPosition(), clientNum);
+}
 
-String action;                      //Action manual/auto
-int path = 0;                       //Direction of blind (1 = down, 0 = stop, -1 = up)
-int setPos = 0;                     //The set position 0-100% by the client
-long currentPosition = 0;           //Current position of the blind
-long maxPosition = 2000000;         //Max position of the blind. Initial value
-boolean loadDataSuccess = false;
-boolean saveItNow = false;          //If true will store positions to SPIFFS
-bool shouldSaveConfig = false;      //Used for WIFI Manager callback to save parameters
-boolean initLoop = true;            //To enable actions first time the loop is run
-boolean ccw = true;                 //Turns counter clockwise to lower the curtain
+//! Save blind state to SPIFFS only if data is new
+void saveBlindState()
+{
+  static long oldCheck = 0;
 
-// Use NodeMCU 1.0 will define the ports
-Stepper_28BYJ_48 small_stepper(D1, D3, D2, D4); //Initiate stepper driver
+  long newCheck = blind.getStep() * blind.getMaxStep() + blind.getInverted();
 
-ESP8266WebServer server(80);              // TCP server at port 80 will respond to HTTP requests
-WebSocketsServer webSocket = WebSocketsServer(81);  // WebSockets will respond on port 81
-
-bool loadConfig() {
-  if (!helper.loadconfig()){
-    return false;
+  if (newCheck != oldCheck)
+  {
+  configManager.getConfig().blindPos = blind.getStep();
+  configManager.getConfig().blindMaxPos = blind.getMaxStep();
+  configManager.getConfig().directionInverted = blind.getInverted();
+  configManager.saveConfig();
   }
-  JsonVariant json = helper.getconfig();
-
-  //Store variables locally
-  currentPosition = long(json["currentPosition"]);
-  maxPosition = long(json["maxPosition"]);
-  strcpy(config_name, json["config_name"]);
-  strcpy(mqtt_server, json["mqtt_server"]);
-  strcpy(mqtt_port, json["mqtt_port"]);
-  strcpy(mqtt_uid, json["mqtt_uid"]);
-  strcpy(mqtt_pwd, json["mqtt_pwd"]);
-  strcpy(config_rotation, json["config_rotation"]);
-
-  return true;
+  oldCheck = newCheck;
 }
 
-/**
-   Save configuration data to a JSON file
-   on SPIFFS
-*/
-bool saveConfig() {
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& json = jsonBuffer.createObject();
-  json["currentPosition"] = currentPosition;
-  json["maxPosition"] = maxPosition;
-  json["config_name"] = config_name;
-  json["mqtt_server"] = mqtt_server;
-  json["mqtt_port"] = mqtt_port;
-  json["mqtt_uid"] = mqtt_uid;
-  json["mqtt_pwd"] = mqtt_pwd;
-  json["config_rotation"] = config_rotation;
-
-  return helper.saveconfig(json);
+//! Sets the blind state. Called after a restart when positioning 
+//! and calibration has been lost
+void updateBlindState()
+{
+  blind.correctData(configManager.getConfig().blindPos,
+                    configManager.getConfig().blindMaxPos,
+                    configManager.getConfig().directionInverted);
 }
 
-/*
-   Connect to MQTT server and publish a message on the bus.
-   Finally, close down the connection and radio
-*/
-void sendmsg(String topic, String payload) {
-  if (!mqttActive)
-    return;
-
-  myMqtt.publish(topic, payload);
-}
-
-
-/****************************************************************************************
-*/
-void processMsg(String res, uint8_t clientnum){
-  /*
-     Check if calibration is running and if stop is received. Store the location
-  */
-  if (action == "set" && res == "(0)") {
-    maxPosition = currentPosition;
-    saveItNow = true;
+//! Process received messages. Will handle messages both from webserver or mqtt
+//! @param msg Command to be ran
+//! @param clientNum The client sending this. 0 if the ESP itself.
+//!                  Increments for each connected client
+void processMsg(String msg, uint8_t clientNum)
+{
+  if (msg == "(0)")
+  {
+    blind.stop();
+    saveBlindState();
   }
-
-  /*
-     Below are actions based on inbound MQTT payload
-  */
-  if (res == "(start)") {
+  else if (msg == "(start)")
+  {
+    blind.setOpen();
+  }
+  else if (msg == "(max)")
+  {
+    blind.setClosed();
+    saveBlindState();
+  }
+  else if (msg == "(1)") // TODO: Replace with Up or Down?
+  {
+    // Move down without limit
+    blind.moveDown();
+  }
+  else if (msg ==  "(-1)")
+  {
+    // Move up without limit
+    blind.moveUp();
+  }
+  else if (msg == "(update)")
+  {
+    //S end position details to client
+    sendPosUpdate(clientNum);
+  }
+  else if (msg == "(save)")
+  {
+    saveBlindState();
+  }
+  else // TODO: fault tolerant else
+  {
     /*
-       Store the current position as the start position
+     * Any other message will take the blind to a position
+     *  Incoming value = 0-100
+     *  path is now the position
     */
-    currentPosition = 0;
-    path = 0;
-    saveItNow = true;
-    action = "manual";
-  } else if (res == "(max)") {
-    /*
-       Store the max position of a closed blind
-    */
-    maxPosition = currentPosition;
-    path = 0;
-    saveItNow = true;
-    action = "manual";
-  } else if (res == "(0)") {
-    /*
-       Stop
-    */
-    path = 0;
-    saveItNow = true;
-    action = "manual";
-  } else if (res == "(1)") {
-    /*
-       Move down without limit to max position
-    */
-    path = 1;
-    action = "manual";
-  } else if (res == "(-1)") {
-    /*
-       Move up without limit to top position
-    */
-    path = -1;
-    action = "manual";
-  } else if (res == "(update)") {
-    //Send position details to client
-    int set = (setPos * 100)/maxPosition;
-    int pos = (currentPosition * 100)/maxPosition;
-    sendmsg(outputTopic, "{ \"set\":"+String(set)+", \"position\":"+String(pos)+" }");
-    webSocket.sendTXT(clientnum, "{ \"set\":"+String(set)+", \"position\":"+String(pos)+" }");
-  } else if (res == "(ping)") {
-    //Do nothing
-  } else {
-    /*
-       Any other message will take the blind to a position
-       Incoming value = 0-100
-       path is now the position
-    */
-    path = maxPosition * res.toInt() / 100;
-    setPos = path; //Copy path for responding to updates
-    action = "auto";
-
-    int set = (setPos * 100)/maxPosition;
-    int pos = (currentPosition * 100)/maxPosition;
-
-    //Send the instruction to all connected devices
-    sendmsg(outputTopic, "{ \"set\":"+String(set)+", \"position\":"+String(pos)+" }");
-    webSocket.broadcastTXT("{ \"set\":"+String(set)+", \"position\":"+String(pos)+" }");
+    blind.setPosition(msg.toInt());
+    sendPosUpdate(clientNum);
+    // Saving the blind state is handled by callback and not handled here
   }
 }
 
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
-    switch(type) {
-        case WStype_TEXT:
-            Serial.printf("[%u] get Text: %s\n", num, payload);
+//! Handle messages from the web server
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length)
+{
+  switch(type) 
+  {
+  case WStype_TEXT:
+    Serial.printf("Webclient nr [%u] sent: %s\n", num, payload);
 
-            String res = (char*)payload;
+    String res = (char*)payload;
 
-            //Send to common MQTT and websocket function
-            processMsg(res, num);
-            break;
-    }
+    //Send to common MQTT and websocket function
+    processMsg(res, num);
+    break;
+  }
 }
-void mqttCallback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
+
+//! Handle MQTT messages
+void mqttCallback(char* topic, byte* payload, unsigned int length) 
+{
+  Serial.printf("Message arrived [%s]\n", topic);
   String res = "";
-  for (int i = 0; i < length; i++) {
+  for (int i = 0; i < length; i++) 
+  {
     res += String((char) payload[i]);
   }
   processMsg(res, NULL);
 }
 
-/**
-  Turn of power to coils whenever the blind
-  is not moving
-*/
-void stopPowerToCoils() {
-  digitalWrite(D1, LOW);
-  digitalWrite(D2, LOW);
-  digitalWrite(D3, LOW);
-  digitalWrite(D4, LOW);
-}
-
-/*
-   Callback from WIFI Manager for saving configuration
-*/
-void saveConfigCallback () {
-  shouldSaveConfig = true;
-}
-
-void handleRoot() {
-  server.send(200, "text/html", INDEX_HTML);
-}
-void handleNotFound(){
-  String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += server.uri();
-  message += "\nMethod: ";
-  message += (server.method() == HTTP_GET)?"GET":"POST";
-  message += "\nArguments: ";
-  message += server.args();
-  message += "\n";
-  for (uint8_t i=0; i<server.args(); i++){
-    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
-  }
-  server.send(404, "text/plain", message);
+//! Called if something went wrong at startup
+void waitAndReboot()
+{
+  Serial.println("Scheduling reboot...");
+  delay(10e4);
+  ESP.restart();
 }
 
 void setup(void)
 {
-  PubSubClient* pSPClient = dynamic_cast<PubSubClient*>(&espClient);
-  myMqtt.setPubSubClient(pSPClient);
+  // Make sure motor driver is at rest
+  blind.restCoils();
+  
   Serial.begin(115200);
-  delay(100);
-  Serial.print("Starting now\n");
+  delay(500);
+  Serial.println("Starting now...");
 
-  //Reset the action
-  action = "";
+  #ifdef USE_RESET_BTN
+   resetButton.setup(onButtonReset);
+  #endif
 
-  //Set the WIFI hostname
-  WiFi.hostname(config_name);
+  #ifdef RESET_CONFIG
+    configManager.reset();
+  #endif
 
-  //Define customer parameters for WIFI Manager
-  WiFiManagerParameter custom_config_name("Name", "Bonjour name", config_name, 40);
-  WiFiManagerParameter custom_rotation("Rotation", "Clockwise rotation", config_rotation, 40);
-  WiFiManagerParameter custom_text("<p><b>Optional MQTT server parameters:</b></p>");
-  WiFiManagerParameter custom_mqtt_server("server", "MQTT server", mqtt_server, 40);
-  WiFiManagerParameter custom_mqtt_port("port", "MQTT port", mqtt_port, 6);
-  WiFiManagerParameter custom_mqtt_uid("uid", "MQTT username", mqtt_server, 40);
-  WiFiManagerParameter custom_mqtt_pwd("pwd", "MQTT password", mqtt_server, 40);
-  WiFiManagerParameter custom_text2("<script>t = document.createElement('div');t2 = document.createElement('input');t2.setAttribute('type', 'checkbox');t2.setAttribute('id', 'tmpcheck');t2.setAttribute('style', 'width:10%');t2.setAttribute('onclick', \"if(document.getElementById('Rotation').value == 'false'){document.getElementById('Rotation').value = 'true'} else {document.getElementById('Rotation').value = 'false'}\");t3 = document.createElement('label');tn = document.createTextNode('Clockwise rotation');t3.appendChild(t2);t3.appendChild(tn);t.appendChild(t3);document.getElementById('Rotation').style.display='none';document.getElementById(\"Rotation\").parentNode.insertBefore(t, document.getElementById(\"Rotation\"));</script>");
-  //Setup WIFI Manager
-  WiFiManager wifiManager;
 
-  //wifiManager.resetSettings();
-
-  //reset settings - for testing
-  //clean FS, for testing
-  //helper.resetsettings(wifiManager);
-
-  wifiManager.setSaveConfigCallback(saveConfigCallback);
-  //add all your parameters here
-  wifiManager.addParameter(&custom_config_name);
-  wifiManager.addParameter(&custom_rotation);
-  wifiManager.addParameter(&custom_text);
-  wifiManager.addParameter(&custom_mqtt_server);
-  wifiManager.addParameter(&custom_mqtt_port);
-  wifiManager.addParameter(&custom_mqtt_uid);
-  wifiManager.addParameter(&custom_mqtt_pwd);
-  wifiManager.addParameter(&custom_text2);
-
-  wifiManager.autoConnect(APid.c_str(), APpw.c_str());
-
-  //Load config upon start
-  if (!SPIFFS.begin()) {
-    Serial.println("Failed to mount file system");
-    return;
-  }
-
-  /* Save the config back from WIFI Manager.
-      This is only called after configuration
-      when in AP mode
-  */
-  if (shouldSaveConfig) {
-    //read updated parameters
-    strcpy(config_name, custom_config_name.getValue());
-    strcpy(mqtt_server, custom_mqtt_server.getValue());
-    strcpy(mqtt_port, custom_mqtt_port.getValue());
-    strcpy(mqtt_uid, custom_mqtt_uid.getValue());
-    strcpy(mqtt_pwd, custom_mqtt_pwd.getValue());
-    strcpy(config_rotation, custom_rotation.getValue());
-
-    //Save the data
-    saveConfig();
-  }
-
-  /*
-     Try to load FS data configuration every time when
-     booting up. If loading does not work, set the default
-     positions
-  */
-  loadDataSuccess = loadConfig();
-  if (!loadDataSuccess) {
-    currentPosition = 0;
-    maxPosition = 2000000;
-  }
-
-  /*
-    Setup multi DNS (Bonjour)
-    */
-  if (MDNS.begin(config_name)) {
-    Serial.println("MDNS responder started");
-    MDNS.addService("http", "tcp", 80);
-    MDNS.addService("ws", "tcp", 81);
-
-  } else {
-    Serial.println("Error setting up MDNS responder!");
-    while(1) {
-      delay(1000);
+  /*********************** Configuration Manager *********************/
+  {
+    // Init SPIFFS
+    if (!configManager.init())
+    {
+       waitAndReboot();
+    }
+    // If we cannot load config (corrupted) we overwrite it
+    if (configManager.loadConfig())
+    {
+      updateBlindState(); // TODO: Register this as a callback instead
+    }
+    else
+    {
+      configManager.saveConfig();
     }
   }
-  Serial.print("Connect to http://"+String(config_name)+".local or http://");
-  Serial.println(WiFi.localIP());
+  /*******************************************************************/
 
+
+
+  /********************** Network Connection Stuff *******************/
+  {
+    // Set the WIFI hostname
+    WiFi.hostname(configManager.getConfig().name);
+
+    // Attach our configuration to the wifi manager
+    configManager.connectConfigToWifiManager(wifiManager);
+
+    // Set the WiFi SSID and passwd to use if in AP mode
+    wifiManager.autoConnect(APid.c_str(), APpw.c_str());
+    wifiManager.setSaveConfigCallback(setNeedSaving);
+  
+    // Setup multi DNS (Bonjour)
+    if (MDNS.begin(configManager.getConfig().name)) 
+    {
+      Serial.println("MDNS responder started");
+      MDNS.addService("http", "tcp", 80);
+      MDNS.addService("ws", "tcp", 81);
+    } 
+    else 
+    {
+      Serial.println("Error setting up MDNS responder!");
+      waitAndReboot(); 
+    }
+    Serial.print("Connect to http://"+String(configManager.getConfig().name)+".local or http://");
+    Serial.println(WiFi.localIP());
+  }
+  /*******************************************************************/
+ 
+
+
+  /**************************** MQTT *********************************/
+  myMqtt.setPubSubClient(psClient);
+  if (String(configManager.getConfig().mqttServer) != "")
+  {
+    Serial.println("Registering MQTT server");
+    myMqtt.setServer(configManager.getConfig().mqttServer, 
+                     configManager.getConfig().getmqttPort().toInt());
+    myMqtt.setClientID(String(configManager.getConfig().name));
+    myMqtt.setUID(configManager.getConfig().mqttUID);
+    myMqtt.setPassword(configManager.getConfig().mqttPWD);
+    // Register callback on received mqtt command
+    Serial.println("Registering mqtt callback");
+    myMqtt.setCallback(mqttCallback);
+  }
+  /*******************************************************************/
+ 
+
+
+  /************************** Web Server *****************************/
   //Start HTTP server
-  server.on("/", handleRoot);
-  server.onNotFound(handleNotFound);
-  server.begin();
-
+  webServer.setup();
+  webServer.begin();
+  Serial.println("HTTP Server Started");
   //Start websocket
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
-
-  /* Setup connection for MQTT and for subscribed
-    messages IF a server address has been entered
-  */
-  if (String(mqtt_server) != ""){
-    Serial.println("Registering MQTT server");
-    myMqtt.setServer(mqtt_server, String(mqtt_port).toInt());
-    myMqtt.setCallback(mqttCallback);
-
-  } else {
-    mqttActive = false;
-    Serial.println("NOTE: No MQTT server address has been registered. Only using websockets");
-  }
-
-  /* Set rotation direction of the blinds */
-  if (String(config_rotation) == "false"){
-    ccw = true;
-  } else {
-    ccw = false;
-  }
-
+  Serial.println("Websockets are set up");
   //Update webpage
-  INDEX_HTML.replace("{VERSION}","V"+version);
-  INDEX_HTML.replace("{NAME}",String(config_name));
+  Serial.println("Settings up web page");
+  webServer.updatePage(version, String(configManager.getConfig().name));
+  /*******************************************************************/
+ 
 
 
-  //Setup OTA
-  //helper.ota_setup(config_name);
+  /*************************** OTA Setup *****************************/
   {
     // Authentication to avoid unauthorized updates
-    //ArduinoOTA.setPassword(OTA_PWD);
+    // ArduinoOTA.setPassword(OTA_PWD);
+    Serial.println("Setting up OTA");
 
-    ArduinoOTA.setHostname(config_name);
+    ArduinoOTA.setHostname(configManager.getConfig().name);
 
     ArduinoOTA.onStart([]() {
       Serial.println("Start");
@@ -404,92 +327,55 @@ void setup(void)
       else if (error == OTA_END_ERROR) Serial.println("End Failed");
     });
     ArduinoOTA.begin();
+    Serial.println("OTA Setup completed");
   }
+  /*******************************************************************/
+
+
+
+  /*************************** Blind Settings ************************/
+  updateBlindState();
+  sendPosUpdate();
+  blind.setPosUpdateCallback(sendPosUpdate);
+  blind.setReachedTargetCallback(saveBlindState);
+  Serial.printf("Maxpos %d\n", configManager.getConfig().blindMaxPos);
+  /*******************************************************************/
+
+
+
+  // Make sure motor driver is at rest
+  blind.restCoils();
+  Serial.println("Driver coils turned off");
 }
 
 void loop(void)
 {
-  //OTA client code
+  // OTA client code
   ArduinoOTA.handle();
 
-  //Websocket listner
+  // Handle onboard button press
+  #ifdef USE_RESET_BTN
+    resetButton.read();
+  #endif
+
+  // Websocks listener
   webSocket.loop();
 
-  /**
-    Serving the webpage
-  */
-  server.handleClient();
-
-  //MQTT client
-  if (mqttActive){
-    myMqtt.reconnect(mqtt_uid, mqtt_pwd, { inputTopic.c_str() });
+  // Wifi
+  // TODO: Revise solution (Not tested)
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("WiFi connection lost. Trying to reconnect...");
+    WiFi.reconnect();
   }
+
+  // Serving the webpage
+  webServer.handleClient();
 
   myMqtt.run();
 
+  blind.run();
 
-  /**
-    Storing positioning data and turns off the power to the coils
-  */
-  if (saveItNow) {
-    saveConfig();
-    saveItNow = false;
-
-    /*
-      If no action is required by the motor make sure to
-      turn off all coils to avoid overheating and less energy
-      consumption
-    */
-    stopPowerToCoils();
-
-  }
-
-  /**
-    Manage actions. Steering of the blind
-  */
-  if (action == "auto") {
-    /*
-       Automatically open or close blind
-    */
-    if (currentPosition > path){
-      small_stepper.step(ccw ? -1: 1);
-      currentPosition = currentPosition - 1;
-    } else if (currentPosition < path){
-      small_stepper.step(ccw ? 1 : -1);
-      currentPosition = currentPosition + 1;
-    } else {
-      path = 0;
-      action = "";
-      Serial.println("Stopped. Reached wanted position");
-      saveItNow = true;
-    }
-    static int prevPos = 0;
-    int set = (setPos * 100)/maxPosition;
-    int pos = (currentPosition * 100)/maxPosition;
-    if (pos != prevPos)
-    {
-      webSocket.broadcastTXT("{ \"set\":"+String(set)+", \"position\":"+String(pos)+" }");
-      sendmsg(outputTopic, "{ \"set\":"+String(set)+", \"position\":"+String(pos)+" }");
-    }
-    prevPos = pos;    
-
- } else if (action == "manual" && path != 0) {
-    /*
-       Manually running the blind
-    */
-    small_stepper.step(ccw ? path : -path);
-    currentPosition = currentPosition + path;
-  }
-
-  /*
-     After running setup() the motor might still have
-     power on some of the coils. This is making sure that
-     power is off the first time loop() has been executed
-     to avoid heating the stepper motor draining
-     unnecessary current
-  */
-  if (initLoop) {
-    initLoop = false;
-    stopPowerToCoils();
-  }
+  //! If config needs saving. E.g. WifiManager changes
+  configManager.run();
 }

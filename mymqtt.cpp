@@ -164,6 +164,9 @@ void MyMqtt::publish(String payload)
 
 void MyMqtt::run()
 {
+    // TODO: return if no server is set
+    // if (!server!) return;
+    
     // Reconnect if needed
     reconnect(m_userId.c_str(), m_password.c_str());
 

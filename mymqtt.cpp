@@ -1,5 +1,11 @@
 #include "mymqtt.h"
 
+// Wifi. For retrieval of local IP
+#include <WiFiManager.h>
+
+namespace philsson {
+namespace mqtt {
+  
 bool MyMqtt::publishStatePending = false;
 
 namespace {
@@ -11,6 +17,7 @@ namespace {
 
 MyMqtt::MyMqtt()
 : m_pPsclient(0)
+, m_baseTopic()
 , m_topicIn()
 , m_topicOut()
 , m_clientId("ESPClient-" + String(ESP.getChipId()))
@@ -104,7 +111,7 @@ void MyMqtt::reconnect(String uid, String pwd, std::list<const char*> topics)
       Serial.println("connected");
 
       //Send register MQTT message with JSON of chipid and ip-address
-      publish("/raw/esp8266/register", "{ \"id\": \"" + String(ESP.getChipId()) + "\", \"ip\":\"" + WiFi.localIP().toString() +"\"}");
+      publish(m_baseTopic + "register", "{ \"id\": \"" + String(ESP.getChipId()) + "\", \"ip\":\"" + WiFi.localIP().toString() +"\"}");
 
       //Setup subscription
       if (!topics.empty()){
@@ -139,7 +146,6 @@ void MyMqtt::publish(String topic, String payload)
     return;
   }
 
-  Serial.println("Trying to send msg..."+topic+":"+payload);
   //Send status to MQTT bus if connected
   if (m_pPsclient->connected()) 
   {
@@ -159,7 +165,7 @@ void MyMqtt::publish(String payload)
 void MyMqtt::run()
 {
     // Reconnect if needed
-    reconnect(m_userId, m_password);
+    reconnect(m_userId.c_str(), m_password.c_str());
 
     // State Publish if needed
     if (publishStatePending)
@@ -174,7 +180,10 @@ void MyMqtt::setTopics()
 {
     // TODO: If name...
     // else
-    String baseTopic = "/raw/blind/" + m_clientId + "/";
-    m_topicIn = baseTopic + "in";
-    m_topicOut = baseTopic + "out";
+    m_baseTopic = "/raw/blind/" + m_clientId + "/";
+    m_topicIn = m_baseTopic + "in";
+    m_topicOut = m_baseTopic + "out";
 }
+
+} // namespace philsson
+} // namespace mqtt

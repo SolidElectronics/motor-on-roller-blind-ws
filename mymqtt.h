@@ -6,8 +6,10 @@
 #include <PubSubClient.h>
 // Timers
 #include <Ticker.h>
-// Wifi. For retrieval of local IP
-#include <WiFiManager.h>
+
+
+namespace philsson {
+namespace mqtt {
 
 class MyMqtt {
 public:
@@ -62,6 +64,7 @@ private:
   // The MQTT client
   PubSubClient* m_pPsclient;
     
+  String m_baseTopic;
   String m_topicIn;
   String m_topicOut;
 
@@ -75,3 +78,6 @@ private:
   // Timer to trigger internal callback
   Ticker m_heartbeatTicker;
 };
+
+} // namespace philsson
+} // namespace mqtt

@@ -3,28 +3,37 @@
 namespace philsson {
 namespace blind {
 
+#define STEPS 2038 // the number of steps in one revolution (28BYJ-48)
+
 Blind::Blind()
-: m_stepper(D1, D3, D2, D4)
+: m_stepper(STEPS, D4, D3, D2, D1)
 , m_position(0)
 , m_targetPosition(0)
 , m_posStep(0)
 , m_targetPosStep(0)
 , m_maxStep(10000)
+, m_speedUp(5)
+, m_speedDown(5)
 , m_inverted(false)
 , m_mode(Mode::REST)
 , m_dir(Direction::UP)
 , m_posUpdateCallback(nullptr)
 , m_reachedTargetCallback(nullptr)
-{}
+{
+}
 
 void Blind::correctData(long currentStep,
                         long maxStep,
-                        bool inverted)
+                        bool inverted,
+                        long speedUp,
+                        long speedDown)
 {
   m_posStep = currentStep;
   m_targetPosStep = m_posStep;
   m_maxStep = maxStep;
   m_inverted = inverted;
+  m_speedUp = speedUp;
+  m_speedDown = speedDown;
   calculatePosition();
 }
 
@@ -140,11 +149,13 @@ void Blind::run()
     {
       long dir = (m_posStep < m_targetPosStep) ? 1 : -1;
       dir *= m_inverted ? -1 : 1;
+      m_stepper.setSpeed((dir < 0) ? m_speedUp : m_speedDown);
       step(dir);
     }
     break;
   case Mode::MANUAL:
     long stepTarget = (m_dir == Direction::DOWN) ? 1 : -1;
+    m_stepper.setSpeed(min(m_speedUp, m_speedDown));
     m_stepper.step(m_inverted ? -stepTarget : stepTarget);
     m_posStep += stepTarget;
     break;
@@ -186,6 +197,32 @@ void Blind::calculatePosition()
       m_posUpdateCallback(m_position, m_targetPosition);
     }
   }
+}
+
+void Blind::setSpeed(long rpm)
+{
+  m_speedUp = rpm;
+  m_speedDown = rpm;
+}
+
+void Blind::setSpeed(long rpm, Direction dir)
+{
+  Serial.printf("Setting new %s direction speed to: %d", 
+                (dir == Direction::UP) ? "upward" : "downward", rpm);
+  switch (dir)
+  {
+  case Direction::UP:
+    m_speedUp = rpm;
+    break;
+  case Direction::DOWN:
+    m_speedDown = rpm;
+    break;
+  }
+}
+
+long Blind::getSpeed(Direction dir)
+{
+  return (dir == Direction::UP) ? m_speedUp : m_speedDown;
 }
 
 } // namespace blind

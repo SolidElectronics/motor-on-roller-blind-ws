@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Arduino.h"
-#include <Stepper_28BYJ_48.h>
+#include <Stepper.h>
 
 namespace philsson {
 namespace blind {
@@ -28,9 +28,13 @@ public:
   //!                    or was at upon last save
   //! @param maxStep     Num of steps from closed to open
   //! @param inverted    Dir of motor
+  //! @param speedUp     RPM of the blinder Upwards
+  //! @param speedDown   RPM of the blinder Downwards
   void correctData(long currentStep,
                    long maxStep,
-                   bool inverted);
+                   bool inverted,
+                   long speedUp,
+                   long speedDown);
 
   //! Move blind to position
   //! @param position [0, 100] from Open to Closed
@@ -78,6 +82,15 @@ public:
   //! depending on the current state and objective
   void run();
 
+  //! Set the speed of the blinder
+  //! @param rpm Revolutions per minute of the motor
+  //!            Defaults to 5. A too high value will just stall
+  void setSpeed(long rpm);
+
+  void setSpeed(long rpm, Direction dir);
+
+  long getSpeed(Direction dir);
+
 private:
 
   //! Step the motor. If not allowed to step (Not in [0, 100]) return false
@@ -85,7 +98,8 @@ private:
 
   void calculatePosition();
 
-  Stepper_28BYJ_48 m_stepper;
+  // Stepper_28BYJ_48 m_stepper;
+  Stepper m_stepper;
 
   // Relative position in percent
   uint8_t m_position;
@@ -99,6 +113,8 @@ private:
 
   // Num of steps from closed to open
   long m_maxStep;
+
+  long m_speedUp, m_speedDown;
 
   bool m_inverted;
 

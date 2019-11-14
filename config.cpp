@@ -86,6 +86,8 @@ bool ConfigManager::saveConfig()
     doc["blindPos"] = m_config.blindPos;
     doc["blindMaxPos"] = m_config.blindMaxPos;
     doc["directionInverted"] = m_config.directionInverted;
+    doc["speedUp"] = m_config.speedUp;
+    doc["speedDown"] = m_config.speedDown;
 
     // Write
     if (!serializeJson(doc, file))
@@ -144,6 +146,8 @@ bool ConfigManager::loadConfig()
     m_config.blindPos = doc["blindPos"] | -1;
     m_config.blindMaxPos = doc["blindMaxPos"] | -1;
     m_config.directionInverted = doc["directionInverted"] | 0;
+    m_config.speedUp = doc["speedUp"] | 5;
+    m_config.speedDown = doc["speedDown"] | 5; 
 
     Serial.println("Configuration completed");
 

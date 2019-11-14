@@ -34,6 +34,8 @@ struct Config
     long blindPos;
     long blindMaxPos;
     bool directionInverted;
+    uint8_t speedUp;
+    uint8_t speedDown;
 
     GETSET(name);
     GETSET(mqttServer);

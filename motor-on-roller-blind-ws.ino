@@ -95,6 +95,8 @@ void saveBlindState()
   configManager.getConfig().blindPos = blind.getStep();
   configManager.getConfig().blindMaxPos = blind.getMaxStep();
   configManager.getConfig().directionInverted = blind.getInverted();
+  configManager.getConfig().speedUp = blind.getSpeed(Blind::Direction::UP);
+  configManager.getConfig().speedDown = blind.getSpeed(Blind::Direction::DOWN);
   configManager.saveConfig();
   }
   oldCheck = newCheck;
@@ -106,7 +108,9 @@ void updateBlindState()
 {
   blind.correctData(configManager.getConfig().blindPos,
                     configManager.getConfig().blindMaxPos,
-                    configManager.getConfig().directionInverted);
+                    configManager.getConfig().directionInverted,
+                    configManager.getConfig().speedUp,
+                    configManager.getConfig().speedDown);
 }
 
 //! Process received messages. Will handle messages both from webserver or mqtt
@@ -115,7 +119,22 @@ void updateBlindState()
 //!                  Increments for each connected client
 void processMsg(String msg, uint8_t clientNum)
 {
-  if (msg == "(0)")
+  int delimiterPos = msg.indexOf('/');
+  if (delimiterPos != -1)
+  {
+    String topic = msg.substring(0, delimiterPos);
+    String payload = msg.substring(delimiterPos + 1, msg.length());
+    Serial.printf("topic: %s, payload: %s\n", topic.c_str(), payload.c_str());
+    if (topic == "downspeed")
+    {
+      blind.setSpeed(payload.toInt(), Blind::Direction::DOWN);
+    }
+    else if (topic == "upspeed")
+    {
+      blind.setSpeed(payload.toInt(), Blind::Direction::UP);
+    }
+  }
+  else if (msg == "(0)")
   {
     blind.stop();
     saveBlindState();

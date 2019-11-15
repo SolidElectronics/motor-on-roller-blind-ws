@@ -9,10 +9,10 @@ namespace mqtt {
 bool MyMqtt::publishStatePending = false;
 
 namespace {
-    void setPublishState()
-    {
-        MyMqtt::publishStatePending = true;
-    }
+  void setPublishState()
+  {
+    MyMqtt::publishStatePending = true;
+  }
 }
 
 MyMqtt::MyMqtt()
@@ -20,11 +20,12 @@ MyMqtt::MyMqtt()
 , m_baseTopic()
 , m_topicIn()
 , m_topicOut()
-, m_clientId("ESPClient-" + String(ESP.getChipId()))
+, m_clientId(String("EspClient-" + String(ESP.getChipId())))
 , m_userId()
 , m_password()
 , m_lastMsg()
 , m_heartbeatTicker()
+, m_serverSet(false)
 {
     setTopics();
     
@@ -44,6 +45,7 @@ void MyMqtt::setServer(const char * domain, uint16_t port)
     return;
   }
   m_pPsclient->setServer(domain, port);
+  m_serverSet = true;
 }
 
 void MyMqtt::setClientID(String clientID)
@@ -164,28 +166,28 @@ void MyMqtt::publish(String payload)
 
 void MyMqtt::run()
 {
-    // TODO: return if no server is set
-    // if (!server!) return;
-    
-    // Reconnect if needed
-    reconnect(m_userId.c_str(), m_password.c_str());
+  if (!m_serverSet)
+  {
+    return;
+  }
+  
+  // Reconnect if needed
+  reconnect(m_userId.c_str(), m_password.c_str());
 
-    // State Publish if needed
-    if (publishStatePending)
-    {
-        Serial.println("Mqtt ticker...");
-        MyMqtt::publishStatePending = false;
-        publish(m_lastMsg);
-    }
+  // State Publish if needed
+  if (publishStatePending)
+  {
+    Serial.println("Mqtt ticker...");
+    MyMqtt::publishStatePending = false;
+    publish(m_lastMsg);
+  }
 }
 
 void MyMqtt::setTopics()
 {
-    // TODO: If name...
-    // else
-    m_baseTopic = "/raw/blind/" + m_clientId + "/";
-    m_topicIn = m_baseTopic + "in";
-    m_topicOut = m_baseTopic + "out";
+  m_baseTopic = "/raw/blind/" + m_clientId + "/";
+  m_topicIn = m_baseTopic + "in";
+  m_topicOut = m_baseTopic + "out";
 }
 
 } // namespace philsson

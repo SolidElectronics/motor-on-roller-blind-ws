@@ -13,7 +13,7 @@ namespace mqtt {
 
 class MyMqtt {
 public:
-MyMqtt();
+  MyMqtt();
 
   void setPubSubClient(PubSubClient& wifiClient);
 
@@ -29,6 +29,7 @@ MyMqtt();
   void setCallback(MQTT_CALLBACK_SIGNATURE);
 
   //! Do the stuff
+  //! Will just return if Server has not been set
   void run();
 
   //! Reconnect without authentication
@@ -77,6 +78,8 @@ private:
 
   // Timer to trigger internal callback
   Ticker m_heartbeatTicker;
+
+  bool m_serverSet;
 };
 
 } // namespace philsson

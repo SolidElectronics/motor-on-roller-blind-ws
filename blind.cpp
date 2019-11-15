@@ -42,6 +42,7 @@ void Blind::setPosition(uint8_t position)
   m_targetPosStep = m_maxStep * position / 100;
   Serial.printf("New target: %d% at step %d\n", position, m_targetPosStep);
   m_mode = Mode::AUTO;
+  m_dir = (m_posStep < m_targetPosStep) ? Direction::DOWN : Direction::UP;
 }
 
 uint8_t Blind::getPosition()
@@ -147,38 +148,38 @@ void Blind::run()
     }
     else
     {
-      long dir = (m_posStep < m_targetPosStep) ? 1 : -1;
-      dir *= m_inverted ? -1 : 1;
-      m_stepper.setSpeed((dir < 0) ? m_speedUp : m_speedDown);
-      step(dir);
+      step(1, m_dir, m_mode);
     }
+    calculatePosition();
     break;
-  case Mode::MANUAL:
-    long stepTarget = (m_dir == Direction::DOWN) ? 1 : -1;
-    m_stepper.setSpeed(min(m_speedUp, m_speedDown));
-    m_stepper.step(m_inverted ? -stepTarget : stepTarget);
-    m_posStep += stepTarget;
+  case Mode::MANUAL:    
+    step(1, m_dir, m_mode);
     break;
   }
-  calculatePosition();
 }
 
-bool Blind::step(long steps)
+bool Blind::step(long steps, Direction dir, Mode mode)
 {
-  // Logic to work even with negative maxStep
-  if (abs(m_posStep + steps) >= 0 && abs(m_posStep + steps) <= abs(m_maxStep))
+  if (dir == Direction::UP)
   {
-    m_stepper.step(steps);
-    m_posStep += steps;
+    steps *= -1;
   }
-  else
+  // Logic to work even with negative maxStep
+  if (mode == Mode::AUTO &&
+        (abs(m_posStep + steps) < 0 || abs(m_posStep + steps) > abs(m_maxStep)))
   {
     Serial.printf("Trying to overstep. Step: %d, TargetStep: %d, MaxStep: %d\n", 
                   m_posStep, 
                   m_targetPosStep, 
                   m_maxStep);
     stop();
+    return false;
   }
+
+  m_stepper.setSpeed((dir == Direction::UP) ? m_speedUp : m_speedDown);
+  m_stepper.step(m_inverted ? -steps : steps);
+  m_posStep += steps;
+  return true;
 }
 
 void Blind::calculatePosition()

@@ -94,7 +94,10 @@ public:
 private:
 
   //! Step the motor. If not allowed to step (Not in [0, 100]) return false
-  bool step(long steps);
+  //! @param steps     Amount of steps
+  //! @param direction Direction
+  //! @param mode      MANUAL will not stop. AUTO will stop at limit
+  bool step(long steps, Direction dir, Mode mode);
 
   void calculatePosition();
 

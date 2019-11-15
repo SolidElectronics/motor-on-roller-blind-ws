@@ -13,6 +13,8 @@
 
 // Comment in to use reset button. 
 // OBS! Will not work properly if motor uses D1-D4 (One of the IOs collide)
+// TODO: Maybe we can listen to button press before the first movement
+//       of the blinder
 // #define USE_RESET_BTN
 
 // Comment in to reset configuration
@@ -31,7 +33,7 @@ String APpw = "nidayand";           //Hardcoded password for access point
 
 //----------------------------------------------------
 
-String version = "1.3.1"; // Not relevant with this Fork (Will not follow master)
+String version = "0.0.0"; // Not relevant with this Fork (Will not follow master)
 
 // WiFi and Mqtt
 WiFiClient espClient;
@@ -58,10 +60,11 @@ WebServer& webServer = WebServer::instance();
 
 
 //! Callback function to be called when the button is pressed.
-void onButtonReset() 
+void resetAllSettings() 
 {
-    Serial.println("Reset has been triggered by button!");
+    Serial.println("Reset has been triggered!");
     configManager.reset();
+    wifiManager.resetSettings();
 }
 
 //! Position update (position and target position) to webserver and mqtt
@@ -226,11 +229,11 @@ void setup(void)
   Serial.println("Starting now...");
 
   #ifdef USE_RESET_BTN
-   resetButton.setup(onButtonReset);
+   resetButton.setup(resetAllSettings);
   #endif
 
   #ifdef RESET_CONFIG
-    configManager.reset();
+    resetAllSettings();
   #endif
 
 
@@ -264,8 +267,12 @@ void setup(void)
     configManager.connectConfigToWifiManager(wifiManager);
 
     // Set the WiFi SSID and passwd to use if in AP mode
-    wifiManager.autoConnect(APid.c_str(), APpw.c_str());
     wifiManager.setSaveConfigCallback(setNeedSaving);
+    wifiManager.autoConnect(APid.c_str(), APpw.c_str());
+
+    // Check if WifiManager triggered a save
+    // This needs to be done if config has been updated
+    configManager.saveCheckWifiManager();
   
     // Setup multi DNS (Bonjour)
     if (MDNS.begin(configManager.getConfig().name)) 

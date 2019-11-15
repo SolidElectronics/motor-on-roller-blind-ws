@@ -8,14 +8,12 @@
 #include "blind.h"
 #include "config.h"
 #include "mymqtt.h"
-#include "utilities.h"
 #include "webserver.h"
 
-// Comment in to use reset button. 
-// OBS! Will not work properly if motor uses D1-D4 (One of the IOs collide)
-// TODO: Maybe we can listen to button press before the first movement
-//       of the blinder
-// #define USE_RESET_BTN
+// Comment out to disable reset btn
+// The button will only read at startup. Keep it pressed on boot to reset
+#define USE_RESET_BTN
+#define RESETBUTTON_PIN 0 // Built in button
 
 // Comment in to reset configuration
 // For manual triggering. Restore after usage (Requires reflashing before and after)
@@ -24,7 +22,6 @@
 using namespace ::philsson::blind;
 using namespace ::philsson::config;
 using namespace ::philsson::mqtt;
-using namespace ::philsson::utilities;
 
 //--------------- CHANGE PARAMETERS ------------------
 //Configure Default Settings for Access Point logon
@@ -53,10 +50,6 @@ MyMqtt myMqtt;
 ConfigManager configManager;
 Blind blind;
 WebServer& webServer = WebServer::instance();
-
-#ifdef USE_RESET_BTN
-  ResetButton resetButton; // Not usable with motor on D1-D4
-#endif
 
 
 //! Callback function to be called when the button is pressed.
@@ -228,10 +221,6 @@ void setup(void)
   delay(500);
   Serial.println("Starting now...");
 
-  #ifdef USE_RESET_BTN
-   resetButton.setup(resetAllSettings);
-  #endif
-
   #ifdef RESET_CONFIG
     resetAllSettings();
   #endif
@@ -369,6 +358,34 @@ void setup(void)
 
 
 
+  /***************************** Do Reset? ***************************/
+  #ifdef USE_RESET_BTN
+  {
+    pinMode(RESETBUTTON_PIN, INPUT);
+
+    int resetPressed = 0;
+    for (int i = 0; i < 100; ++i)
+    {
+      if (!digitalRead(RESETBUTTON_PIN))
+      {
+        resetPressed++;
+      }
+    }
+    if (resetPressed > 50)
+    {
+      Serial.println("Reset Button Pressed");
+      resetAllSettings();
+    }
+    
+    // Restore pin modes
+    pinMode(D3, OUTPUT);
+  }
+  #endif
+  /*******************************************************************/
+
+
+
+
   // Make sure motor driver is at rest
   blind.restCoils();
   Serial.println("Driver coils turned off");
@@ -379,10 +396,6 @@ void loop(void)
   // OTA client code
   ArduinoOTA.handle();
 
-  // Handle onboard button press
-  #ifdef USE_RESET_BTN
-    resetButton.read();
-  #endif
 
   // Websocks listener
   webSocket.loop();

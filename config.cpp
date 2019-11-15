@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include "Arduino.h"
+#include <ESP8266WiFi.h>
 #include <SPI.h>
 #include "FS.h"
 
@@ -105,6 +106,25 @@ bool ConfigManager::saveConfig()
     return true;
 }
 
+bool ConfigManager::saveCheckWifiManager()
+{
+  if (needSaving)
+  {
+    Serial.println("Save triggered at startup");
+
+    strcpy(m_config.name, m_wmName.getValue());
+    strcpy(m_config.mqttServer, m_wmMqttServer.getValue());
+    strcpy(m_config.mqttPort, m_wmMqttPort.getValue());
+    strcpy(m_config.mqttUID, m_wmMqttUID.getValue());
+    strcpy(m_config.mqttPWD, m_wmMqttPWD.getValue());
+
+    saveConfig();
+    return true;
+  }
+  Serial.println("No saving needed");
+  return false;
+}
+
 bool ConfigManager::loadConfig()
 {
     bool result = true;
@@ -138,7 +158,7 @@ bool ConfigManager::loadConfig()
         result = false;
     }
 
-    m_config.setname(doc["name"] | "BlindX");
+    m_config.setname(doc["name"] | String("EspClient-" + String(ESP.getChipId())));
     m_config.setmqttServer(doc["mqttServer"] | "");
     m_config.setmqttPort(doc["mqttPort"] | "1883");
     m_config.setmqttUID(doc["mqttUID"] | "");
@@ -184,8 +204,6 @@ bool ConfigManager::printConfig()
 bool ConfigManager::reset()
 {
     SPIFFS.format();
-    // TODO: may want to reset wifimanager here. Maybe in main
-    //wifim.resetSettings();
 }
 
 Config& ConfigManager::getConfig()

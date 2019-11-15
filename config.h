@@ -56,6 +56,9 @@ public:
 
     bool saveConfig();
 
+    //! Saves config if needed
+    bool saveCheckWifiManager();
+
     //! Load the config from SPIFFS
     bool loadConfig();
 

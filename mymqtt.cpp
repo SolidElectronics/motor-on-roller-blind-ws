@@ -185,7 +185,7 @@ void MyMqtt::run()
 
 void MyMqtt::setTopics()
 {
-  m_baseTopic = "/raw/blind/" + m_clientId + "/";
+  m_baseTopic = "/blind/" + m_clientId + "/";
   m_topicIn = m_baseTopic + "in";
   m_topicOut = m_baseTopic + "out";
 }

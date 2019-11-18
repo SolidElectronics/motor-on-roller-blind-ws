@@ -180,6 +180,7 @@ void MyMqtt::run()
     Serial.println("Mqtt ticker...");
     MyMqtt::publishStatePending = false;
     publish(m_lastMsg);
+    publish(m_baseTopic + "availability", "online");
   }
 }
 

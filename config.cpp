@@ -165,7 +165,7 @@ bool ConfigManager::loadConfig()
     m_config.setmqttPWD(doc["mqttPWD"] | "");
     m_config.blindPos = doc["blindPos"] | -1;
     m_config.blindMaxPos = doc["blindMaxPos"] | -1;
-    m_config.directionInverted = doc["directionInverted"] | 0;
+    m_config.directionInverted = doc["directionInverted"] | false;
     m_config.speedUp = doc["speedUp"] | 5;
     m_config.speedDown = doc["speedDown"] | 5; 
 

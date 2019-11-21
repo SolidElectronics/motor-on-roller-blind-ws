@@ -3,10 +3,8 @@
 namespace philsson {
 namespace blind {
 
-#define STEPS 2038 // the number of steps in one revolution (28BYJ-48)
-
-Blind::Blind()
-: m_stepper(STEPS, D4, D3, D2, D1)
+Blind::Blind(IStepper* pStepper)
+: m_pStepper(pStepper)
 , m_position(0)
 , m_targetPosition(0)
 , m_posStep(0)
@@ -106,10 +104,7 @@ void Blind::setClosed()
 
 void Blind::restCoils()
 {
-  digitalWrite(D1, LOW);
-  digitalWrite(D2, LOW);
-  digitalWrite(D3, LOW);
-  digitalWrite(D4, LOW);
+  m_pStepper->rest();
 }
 
 void Blind::stop()
@@ -176,8 +171,8 @@ bool Blind::step(long steps, Direction dir, Mode mode)
     return false;
   }
 
-  m_stepper.setSpeed((dir == Direction::UP) ? m_speedUp : m_speedDown);
-  m_stepper.step(m_inverted ? -steps : steps);
+  m_pStepper->setSpeed((dir == Direction::UP) ? m_speedUp : m_speedDown);
+  m_pStepper->step(m_inverted ? -steps : steps);
   m_posStep += steps;
   return true;
 }

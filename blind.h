@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Arduino.h"
-#include <Stepper.h>
+#include "IStepper.h"
 
 namespace philsson {
 namespace blind {
@@ -20,7 +20,7 @@ public:
     DOWN,
   };
 
-  Blind();
+  Blind(IStepper* pStepper);
 
   //! Set position and configuration
   //! Possibly set at startup from memory
@@ -102,7 +102,7 @@ private:
   void calculatePosition();
 
   // Stepper_28BYJ_48 m_stepper;
-  Stepper m_stepper;
+  IStepper* m_pStepper;
 
   // Relative position in percent
   uint8_t m_position;

@@ -9,11 +9,21 @@
 #include "config.h"
 #include "mymqtt.h"
 #include "webserver.h"
+#include "my28BYJ48.h"
+#include "a4988.h"
 
 // Comment out to disable reset btn
 // The button will only read at startup. Keep it pressed on boot to reset
 #define USE_RESET_BTN
 #define RESETBUTTON_PIN 0 // Built in button
+
+/* Comment in to use the second driver description
+ * Driver 1: Stepper drivers with 4 inputs to run the stepper logic
+ *           on the CPU like the ULN2003
+ * Driver 2: Stepper drivers with built in control stepper control as the A4899
+ *           with pins EN, DIR and STEP
+ */
+// #define SMARTDRIVER
 
 // Comment in to reset configuration
 // For manual triggering. Restore after usage (Requires reflashing before and after)
@@ -45,10 +55,16 @@ PubSubClient psClient(espClient);
 // WebSockets will respond on port 81
 WebSocketsServer webSocket = WebSocketsServer(81); 
 
+#ifdef SMARTDRIVER
+A4988 stepper;
+#else
+My28BYJ48 stepper;
+#endif
+
 // Philsson components
 MyMqtt myMqtt;
 ConfigManager configManager;
-Blind blind;
+Blind blind(&stepper);
 WebServer& webServer = WebServer::instance();
 
 

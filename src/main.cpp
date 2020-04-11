@@ -74,6 +74,7 @@ void resetAllSettings()
     Serial.println("Reset has been triggered!");
     configManager.reset();
     wifiManager.resetSettings();
+    ESP.restart();
 }
 
 //! Position update (position and target position) to webserver and mqtt

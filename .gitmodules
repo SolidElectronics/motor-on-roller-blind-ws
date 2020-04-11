@@ -1,0 +1,18 @@
+[submodule "lib/Stepper"]
+	path = lib/Stepper
+	url = https://github.com/arduino-libraries/Stepper.git
+[submodule "lib/WiFiManager"]
+	path = lib/WiFiManager
+	url = https://github.com/tzapu/WiFiManager.git
+[submodule "lib/pubsubclient"]
+	path = lib/pubsubclient
+	url = https://github.com/knolleary/pubsubclient.git
+[submodule "lib/ArduinoJson"]
+	path = lib/ArduinoJson
+	url = https://github.com/bblanchon/ArduinoJson.git
+[submodule "lib/arduinoWebSockets"]
+	path = lib/arduinoWebSockets
+	url = https://github.com/Links2004/arduinoWebSockets.git
+[submodule "lib/esp8266_mdns"]
+	path = lib/esp8266_mdns
+	url = https://github.com/mrdunk/esp8266_mdns.git

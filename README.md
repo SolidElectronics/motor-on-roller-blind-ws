@@ -29,12 +29,14 @@ To reset the board settings you can hold in the Flash button on the board slight
 Simply do not enter any string in the MQTT server form field upon WIFI configuration of the device (step 3 above)
 
 ### Payload options
-- `(start)` - (calibrate) Sets the current position as top position
-- `(max)` - (calibrate) Sets the current position as max position. Set `start` before you define `max` as `max` is a relative position to `start`
-- `(0)` - (manual mode) Will stop the curtain
-- `(-1)` - (manual mode) Will open the curtain. Requires `(0)` to stop the motor
-- `(1)`- (manual mode) Will close the curtain. Requires `(0)` to stop the motor
-- `0-100` - (auto mode) A number between 0-100 to set % of opened blind. Requires calibration before use. E.g. `50` will open it to 50%
+- ***(start)*** - (calibrate) Sets the current position as top position
+- ***(max)*** - (calibrate) Sets the current position as max position. Set `start` before you define `max` as `max` is a relative position to `start`
+- ***(0)*** - (manual mode) Will stop the curtain
+- ***(-1)*** - (manual mode) Will open the curtain. Requires `(0)` to stop the motor
+- ***(1)***- (manual mode) Will close the curtain. Requires `(0)` to stop the motor
+- ***0-100*** - (auto mode) A number between 0-100 to set % of opened blind. Requires calibration before use. E.g. `50` will open it to 50%
+- ***downspeed/x*** 5 by default. This will be stored in flash
+- ***upspeed/x*** 5 by default. Tis will be stored in flash
 
 ## Required libraries (3rd party)
 *All* required libraries are included as git submodules. Clone this library with submodules.

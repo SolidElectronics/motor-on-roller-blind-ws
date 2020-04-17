@@ -11,6 +11,7 @@
 #include "webserver.h"
 #include "my28BYJ48.h"
 #include "a4988.h"
+#include "WebOTA.h"
 
 // Comment out to disable reset btn
 // The button will only read at startup. Keep it pressed on boot to reset
@@ -44,6 +45,8 @@ String version = "0.0.0"; // Not relevant with this Fork (Will not follow master
 
 // WiFi and Mqtt
 WiFiClient espClient;
+
+WebOTA webOTA;
 
 // Configuration in web interface
 // Connect or fallback to AP
@@ -360,6 +363,8 @@ void setup(void)
     });
     ArduinoOTA.begin();
     Serial.println("OTA Setup completed");
+
+    webOTA.setup(&WiFi);
   }
   /*******************************************************************/
 
@@ -434,4 +439,5 @@ void loop(void)
 
   //! If config needs saving. E.g. WifiManager changes
   configManager.run();
+  webOTA.run();
 }

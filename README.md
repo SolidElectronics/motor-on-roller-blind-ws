@@ -17,6 +17,9 @@ WebSocket based version of [motor-on-roller-blind](https://github.com/nidayand/m
 This project is set-up in plattformIO (VSCode) but there is no need to pull the source code and build the project yourself. A binary is available in the *bin* folder. To flash it use esptool and run the following command:
 > esptool.py --port <*replace with your com port*> write_flash 0x00000 bin/firmware.bin
 
+### OTA updates
+As well as providing flashing through wifi (ArduinoOTA) a binary can also be uploaded to the board via *http://board_name:82/*. 
+
 ## Reset
 To reset the board settings you can hold in the Flash button on the board slightly **after** powering it. Keep holding it in for a few seconds and the board will reboot itself when done and publish its SSID.
 

@@ -23,7 +23,7 @@ MyMqtt::MyMqtt()
 , m_clientId(String("EspClient-" + String(ESP.getChipId())))
 , m_userId()
 , m_password()
-, m_lastMsg()
+, m_lastTopicOutMsg()
 , m_heartbeatTicker()
 , m_serverSet(false)
 {
@@ -141,7 +141,11 @@ void MyMqtt::reconnect(String uid, String pwd, std::list<const char*> topics)
 
 void MyMqtt::publish(String topic, String payload)
 {
-  m_lastMsg = payload;
+  if (topic == m_topicOut)
+  {
+    m_lastTopicOutMsg = payload;
+  }
+  
   if (!m_pPsclient)
   {
     Serial.println("m_pPsClient = NULL");
@@ -179,7 +183,7 @@ void MyMqtt::run()
   {
     Serial.println("Mqtt ticker...");
     MyMqtt::publishStatePending = false;
-    publish(m_lastMsg);
+    publish(m_lastTopicOutMsg);
     publish(m_baseTopic + "availability", "online");
   }
 }

@@ -73,8 +73,8 @@ private:
   String m_userId;
   String m_password;
 
-  // Used for timed republishing. Doubles as availability
-  String m_lastMsg;
+  // Last known out is normally the position
+  String m_lastTopicOutMsg;
 
   // Timer to trigger internal callback
   Ticker m_heartbeatTicker;

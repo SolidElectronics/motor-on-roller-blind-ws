@@ -6,21 +6,23 @@
 namespace philsson {
 namespace blind {
 
-class Blind {
+class Blind
+{
 public:
-
-  enum Mode {
+  enum Mode
+  {
     REST,
     AUTO,
     MANUAL,
   };
 
-  enum Direction {
+  enum Direction
+  {
     UP,
     DOWN,
   };
 
-  Blind(IStepper* pStepper);
+  Blind(IStepper *pStepper);
 
   //! Set position and configuration
   //! Possibly set at startup from memory
@@ -30,11 +32,7 @@ public:
   //! @param inverted    Dir of motor
   //! @param speedUp     RPM of the blinder Upwards
   //! @param speedDown   RPM of the blinder Downwards
-  void correctData(long currentStep,
-                   long maxStep,
-                   bool inverted,
-                   long speedUp,
-                   long speedDown);
+  void correctData(long currentStep, long maxStep, bool inverted, long speedUp, long speedDown);
 
   //! Move blind to position
   //! @param position [0, 100] from Open to Closed
@@ -92,7 +90,6 @@ public:
   long getSpeed(Direction dir);
 
 private:
-
   //! Step the motor. If not allowed to step (Not in [0, 100]) return false
   //! @param steps     Amount of steps
   //! @param direction Direction
@@ -102,7 +99,7 @@ private:
   void calculatePosition();
 
   // Stepper_28BYJ_48 m_stepper;
-  IStepper* m_pStepper;
+  IStepper *m_pStepper;
 
   // Relative position in percent
   uint8_t m_position;
@@ -129,5 +126,5 @@ private:
   void (*m_reachedTargetCallback)(void);
 };
 
-}
-}
+} // namespace blind
+} // namespace philsson

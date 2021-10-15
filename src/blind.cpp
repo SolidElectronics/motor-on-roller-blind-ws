@@ -3,7 +3,7 @@
 namespace philsson {
 namespace blind {
 
-Blind::Blind(IStepper* pStepper)
+Blind::Blind(IStepper *pStepper)
 : m_pStepper(pStepper)
 , m_position(0)
 , m_targetPosition(0)
@@ -20,11 +20,7 @@ Blind::Blind(IStepper* pStepper)
 {
 }
 
-void Blind::correctData(long currentStep,
-                        long maxStep,
-                        bool inverted,
-                        long speedUp,
-                        long speedDown)
+void Blind::correctData(long currentStep, long maxStep, bool inverted, long speedUp, long speedDown)
 {
   m_posStep = currentStep;
   m_targetPosStep = m_posStep;
@@ -133,7 +129,7 @@ void Blind::run()
     break;
   case Mode::AUTO:
     if (m_posStep == m_targetPosStep)
-    {            
+    {
       Serial.println("Reached target position");
       stop();
       if (m_reachedTargetCallback)
@@ -147,7 +143,7 @@ void Blind::run()
     }
     calculatePosition();
     break;
-  case Mode::MANUAL:    
+  case Mode::MANUAL:
     step(1, m_dir, m_mode);
     break;
   }
@@ -160,13 +156,10 @@ bool Blind::step(long steps, Direction dir, Mode mode)
     steps *= -1;
   }
   // Logic to work even with negative maxStep
-  if (mode == Mode::AUTO &&
-        (abs(m_posStep + steps) < 0 || abs(m_posStep + steps) > abs(m_maxStep)))
+  if (mode == Mode::AUTO && (abs(m_posStep + steps) < 0 || abs(m_posStep + steps) > abs(m_maxStep)))
   {
-    Serial.printf("Trying to overstep. Step: %d, TargetStep: %d, MaxStep: %d\n", 
-                  m_posStep, 
-                  m_targetPosStep, 
-                  m_maxStep);
+    Serial.printf("Trying to overstep. Step: %d, TargetStep: %d, MaxStep: %d\n", m_posStep,
+                  m_targetPosStep, m_maxStep);
     stop();
     return false;
   }
@@ -203,7 +196,7 @@ void Blind::setSpeed(long rpm)
 
 void Blind::setSpeed(long rpm, Direction dir)
 {
-  Serial.printf("Setting new %s direction speed to: %d", 
+  Serial.printf("Setting new %s direction speed to: %d",
                 (dir == Direction::UP) ? "upward" : "downward", rpm);
   switch (dir)
   {

@@ -1,4 +1,4 @@
-/* This is a refactorization 
+/* This is a refactorization
  * of nidayand's original webserver
  */
 
@@ -9,15 +9,15 @@
 class WebServer : public ESP8266WebServer
 {
 public:
-    static WebServer& instance()
-    {
-        static WebServer instance;
-        return instance;
-    }
-    void setup();
+  static WebServer &instance()
+  {
+    static WebServer instance;
+    return instance;
+  }
+  void setup();
 
-    void updatePage(String version, String name);
+  void updatePage(String version, String name);
 
 private:
-    WebServer();
+  WebServer();
 };

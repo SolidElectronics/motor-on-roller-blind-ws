@@ -4,7 +4,6 @@
 
 #define STEPS 2038 // the number of steps in one revolution (28BYJ-48)
 
-
 A4988::A4988()
 : m_pinEN(D1)
 , m_pinDir(D2)
@@ -45,7 +44,7 @@ void A4988::step(int steps)
     static bool runResetPin = true;
 
     // move only if the appropriate delay has passed:
-    if (now - lastStepTime >= m_stepperDelay/2)
+    if (now - lastStepTime >= m_stepperDelay / 2)
     {
       lastStepTime = now;
 
@@ -56,7 +55,7 @@ void A4988::step(int steps)
         runResetPin = false;
         continue;
       }
-        
+
       digitalWrite(m_pinStep, HIGH);
       stepsLeft--;
       runResetPin = true;

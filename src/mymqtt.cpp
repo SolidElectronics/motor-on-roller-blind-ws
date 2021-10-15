@@ -5,15 +5,15 @@
 
 namespace philsson {
 namespace mqtt {
-  
+
 bool MyMqtt::publishStatePending = false;
 
 namespace {
-  void setPublishState()
-  {
-    MyMqtt::publishStatePending = true;
-  }
+void setPublishState()
+{
+  MyMqtt::publishStatePending = true;
 }
+} // namespace
 
 MyMqtt::MyMqtt()
 : m_pPsclient(0)
@@ -27,17 +27,17 @@ MyMqtt::MyMqtt()
 , m_heartbeatTicker()
 , m_serverSet(false)
 {
-    setTopics();
-    
-    m_heartbeatTicker.attach(60, setPublishState);
+  setTopics();
+
+  m_heartbeatTicker.attach(60, setPublishState);
 }
 
-void MyMqtt::setPubSubClient(PubSubClient& wifiClient)
+void MyMqtt::setPubSubClient(PubSubClient &wifiClient)
 {
   m_pPsclient = &wifiClient;
 }
 
-void MyMqtt::setServer(const char * domain, uint16_t port)
+void MyMqtt::setServer(const char *domain, uint16_t port)
 {
   if (!m_pPsclient)
   {
@@ -78,18 +78,18 @@ void MyMqtt::reconnect()
 {
   reconnect(String(NULL), String(NULL));
 }
-void MyMqtt::reconnect(std::list<const char*> topics)
+void MyMqtt::reconnect(std::list<const char *> topics)
 {
   reconnect(String(NULL), String(NULL), topics);
 }
 void MyMqtt::reconnect(String uid, String pwd)
 {
-  std::list<const char*> mylist;
+  std::list<const char *> mylist;
   mylist.push_back(m_topicIn.c_str());
   reconnect(uid, pwd, mylist);
 }
 
-void MyMqtt::reconnect(String uid, String pwd, std::list<const char*> topics)
+void MyMqtt::reconnect(String uid, String pwd, std::list<const char *> topics)
 {
   if (!m_pPsclient)
   {
@@ -98,32 +98,35 @@ void MyMqtt::reconnect(String uid, String pwd, std::list<const char*> topics)
   }
   // Loop until we're reconnected
   boolean mqttLogon = false;
-  if (uid!=NULL and pwd != NULL)
+  if (uid != NULL and pwd != NULL)
   {
     mqttLogon = true;
   }
 
-  while (!m_pPsclient->connected()) 
+  while (!m_pPsclient->connected())
   {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     if ((mqttLogon ? m_pPsclient->connect(m_clientId.c_str(), uid.c_str(), pwd.c_str())
-                   : m_pPsclient->connect(m_clientId.c_str()))) 
+                   : m_pPsclient->connect(m_clientId.c_str())))
     {
       Serial.println("connected");
 
-      //Send register MQTT message with JSON of chipid and ip-address
-      publish(m_baseTopic + "register", "{ \"id\": \"" + String(ESP.getChipId()) + "\", \"ip\":\"" + WiFi.localIP().toString() +"\"}");
+      // Send register MQTT message with JSON of chipid and ip-address
+      publish(m_baseTopic + "register", "{ \"id\": \"" + String(ESP.getChipId()) + "\", \"ip\":\"" +
+                                            WiFi.localIP().toString() + "\"}");
 
-      //Setup subscription
-      if (!topics.empty()){
-        for (const char* t : topics){
-           m_pPsclient->subscribe(t);
-           Serial.println("Subscribed to "+String(t));
+      // Setup subscription
+      if (!topics.empty())
+      {
+        for (const char *t : topics)
+        {
+          m_pPsclient->subscribe(t);
+          Serial.println("Subscribed to " + String(t));
         }
       }
-    } 
-    else 
+    }
+    else
     {
       Serial.print("failed, rc=");
       Serial.print(m_pPsclient->state());
@@ -145,19 +148,19 @@ void MyMqtt::publish(String topic, String payload)
   {
     m_lastTopicOutMsg = payload;
   }
-  
+
   if (!m_pPsclient)
   {
     Serial.println("m_pPsClient = NULL");
     return;
   }
 
-  //Send status to MQTT bus if connected
-  if (m_pPsclient->connected()) 
+  // Send status to MQTT bus if connected
+  if (m_pPsclient->connected())
   {
     m_pPsclient->publish(topic.c_str(), payload.c_str());
-  } 
-  else 
+  }
+  else
   {
     Serial.println("PubSub client is not connected...");
   }
@@ -174,7 +177,7 @@ void MyMqtt::run()
   {
     return;
   }
-  
+
   // Reconnect if needed
   reconnect(m_userId.c_str(), m_password.c_str());
 
@@ -184,7 +187,7 @@ void MyMqtt::run()
     Serial.println("Mqtt ticker...");
     MyMqtt::publishStatePending = false;
     publish(m_lastTopicOutMsg);
-    publish(m_baseTopic + "availability", "online");
+    publish(m_baseTopic + "availability", "1");
   }
 }
 
@@ -195,5 +198,5 @@ void MyMqtt::setTopics()
   m_topicOut = m_baseTopic + "out";
 }
 
-} // namespace philsson
 } // namespace mqtt
+} // namespace philsson

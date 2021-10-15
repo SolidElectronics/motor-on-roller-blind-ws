@@ -7,17 +7,17 @@
 // Timers
 #include <Ticker.h>
 
-
 namespace philsson {
 namespace mqtt {
 
-class MyMqtt {
+class MyMqtt
+{
 public:
   MyMqtt();
 
-  void setPubSubClient(PubSubClient& wifiClient);
+  void setPubSubClient(PubSubClient &wifiClient);
 
-  void setServer(const char * domain, uint16_t port);
+  void setServer(const char *domain, uint16_t port);
 
   void setClientID(String clientID);
 
@@ -38,7 +38,7 @@ public:
   //! Reconnect without authentication
   //! Subscribe to some topics
   //! @param topics Topics to subscribe to
-  void reconnect(std::list<const char*> topics);
+  void reconnect(std::list<const char *> topics);
 
   //! Reconnect with authentication
   //! @param uid User ID
@@ -50,7 +50,7 @@ public:
   //! @param uid User ID
   //! @param pwd User Password
   //! @param topics Topics to subscribe to
-  void reconnect(String uid, String pwd, std::list<const char*> topics);
+  void reconnect(String uid, String pwd, std::list<const char *> topics);
 
   void publish(String topic, String payload);
   void publish(String payload);
@@ -59,12 +59,11 @@ public:
   static bool publishStatePending;
 
 private:
-
   void setTopics();
 
   // The MQTT client
-  PubSubClient* m_pPsclient;
-    
+  PubSubClient *m_pPsclient;
+
   String m_baseTopic;
   String m_topicIn;
   String m_topicOut;
@@ -82,5 +81,5 @@ private:
   bool m_serverSet;
 };
 
-} // namespace philsson
 } // namespace mqtt
+} // namespace philsson

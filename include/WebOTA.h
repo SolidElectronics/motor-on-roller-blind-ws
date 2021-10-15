@@ -4,13 +4,11 @@
 class WebOTA
 {
 public:
-
-    WebOTA();
-    void setup(ESP8266WiFiClass* pWiFiClient);
-    void run();
+  WebOTA();
+  void setup(ESP8266WiFiClass *pWiFiClient);
+  void run();
 
 private:
-
-    ESP8266WebServer m_server;
-    ESP8266WiFiClass* m_pWiFiClient;
+  ESP8266WebServer m_server;
+  ESP8266WiFiClass *m_pWiFiClient;
 };

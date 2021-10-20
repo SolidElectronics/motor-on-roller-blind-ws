@@ -392,6 +392,10 @@ void setup(void)
 #endif
   /*******************************************************************/
 
+  // Turn off built-in LED
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+
   // Make sure motor driver is at rest
   blind.restCoils();
   Serial.println("Driver coils turned off");

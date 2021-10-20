@@ -5,8 +5,9 @@
 #define STEPS 2038 // the number of steps in one revolution (28BYJ-48)
 
 My28BYJ48::My28BYJ48()
-: Stepper(STEPS, D4, D3, D2, D1)
-{}
+: Stepper(STEPS, D8, D6, D7, D5)
+{
+}
 
 void My28BYJ48::setSpeed(long rpm)
 {
@@ -20,8 +21,8 @@ void My28BYJ48::step(int steps)
 
 void My28BYJ48::rest()
 {
-  digitalWrite(D1, LOW);
-  digitalWrite(D2, LOW);
-  digitalWrite(D3, LOW);
-  digitalWrite(D4, LOW);
+  digitalWrite(D5, LOW);
+  digitalWrite(D6, LOW);
+  digitalWrite(D7, LOW);
+  digitalWrite(D8, LOW);
 }

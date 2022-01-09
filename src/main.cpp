@@ -41,7 +41,7 @@ String APpw = "nidayand";        // Hardcoded password for access point
 
 //----------------------------------------------------
 
-String version = "0.0.0"; // Not relevant with this Fork (Will not follow master)
+String version = "1.4.0";
 
 // WiFi and Mqtt
 WiFiClient espClient;
@@ -174,7 +174,7 @@ void processMsg(String msg, uint8_t clientNum)
   }
   else if (msg == "(update)")
   {
-    // S end position details to client
+    // Send position details to client
     sendPosUpdate(clientNum);
   }
   else if (msg == "(save)")

@@ -36,7 +36,7 @@ String INDEX_HTML = R"(<!DOCTYPE html>
 
   var setActions = function(){
     doSend('(update)');
-    $.get('https://api.github.com/repos/nidayand/'+repo+'/releases', function(data){
+    $.get('https://api.github.com/repos/solidelectronics/'+repo+'/releases', function(data){
       if (data.length>0 && data[0].tag_name !== cversion){
         $('#cversion').text(cversion);
         $('#nversion').text(data[0].tag_name);
@@ -174,7 +174,7 @@ String INDEX_HTML = R"(<!DOCTYPE html>
     </ons-card>
     <ons-card id='update-card' style='display:none'>
       <div class='title'>Update available</div>
-      <div class='content'>You are running <span id='cversion'></span> and <span id='nversion'></span> is the latest. Go to <a href='https://github.com/nidayand/motor-on-roller-blind-ws/releases'>the repo</a> to download</div>
+      <div class='content'>You are running <span id='cversion'></span> and <span id='nversion'></span> is the latest. Go to <a href='https://github.com/solidelectronics/motor-on-roller-blind-ws/releases'>the repo</a> to download</div>
     </ons-card>
   </ons-page>
 </template>
@@ -242,8 +242,8 @@ String INDEX_HTML = R"(<!DOCTYPE html>
     <p>
       <ul>
         <li>3d print files and instructions: <a href='https://www.thingiverse.com/thing:2392856' target='_blank'>https://www.thingiverse.com/thing:2392856</a></li>
-        <li>Github: <a href='https://github.com/nidayand/motor-on-roller-blind-ws' target='_blank'>https://github.com/nidayand/motor-on-roller-blind-ws</a></li>
-        <li>Licensed under <a href='https://raw.githubusercontent.com/nidayand/motor-on-roller-blind-ws/master/LICENSE' target='_blank'>MIT License</a></li>
+        <li>Github: <a href='https://github.com/solidelectronics/motor-on-roller-blind-ws' target='_blank'>https://github.com/solidelectronics/motor-on-roller-blind-ws</a></li>
+        <li>Licensed under <a href='https://raw.githubusercontent.com/solidelectronics/motor-on-roller-blind-ws/master/LICENSE' target='_blank'>MIT License</a></li>
       </ul>
     </p>
   </div>

@@ -294,7 +294,7 @@ void setup(void)
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);
 
     // Set the WIFI hostname
-    WiFi.hostname(configManager.getConfig().name);
+    WiFi.hostname(String("blind-") + configManager.getConfig().name);
 
     // Attach our configuration to the wifi manager
     configManager.connectConfigToWifiManager(wifiManager);

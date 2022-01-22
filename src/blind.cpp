@@ -126,6 +126,8 @@ void Blind::run()
   switch (m_mode)
   {
   case Mode::REST:
+    // Delay to conserve power if not running the motor.
+    delay(25);
     break;
   case Mode::AUTO:
     if (m_posStep == m_targetPosStep)

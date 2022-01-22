@@ -41,10 +41,11 @@ String APpw = "nidayand";        // Hardcoded password for access point
 
 //----------------------------------------------------
 
-String version = "1.4.0";
+String version = "1.5.1";
 
 // WiFi and Mqtt
 WiFiClient espClient;
+
 
 WebOTA webOTA;
 
@@ -289,6 +290,9 @@ void setup(void)
 
   /********************** Network Connection Stuff *******************/
   {
+    // Set light sleep mode
+    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);
+
     // Set the WIFI hostname
     WiFi.hostname(configManager.getConfig().name);
 
@@ -403,7 +407,6 @@ void setup(void)
 
 void loop(void)
 {
-
   // OTA client code
   ArduinoOTA.handle();
 

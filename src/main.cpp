@@ -14,9 +14,9 @@
 #include "webserver.h"
 
 // Comment out to disable reset btn
-// The button will only read at startup. Keep it pressed on boot to reset
+// The button will only read at startup. Keep it grounded on boot to reset
 #define USE_RESET_BTN
-#define RESETBUTTON_PIN 0 // Built in button
+#define RESETBUTTON_PIN 14 // Pin D5
 
 /* Comment in to use the second driver description
  * Driver 1: Stepper drivers with 4 inputs to run the stepper logic
@@ -243,6 +243,31 @@ void setup(void)
   resetAllSettings();
 #endif
 
+  /***************************** Do Reset? ***************************/
+#ifdef USE_RESET_BTN
+  {
+    pinMode(RESETBUTTON_PIN, INPUT_PULLUP);
+
+    int resetPressed = 0;
+    for (int i = 0; i < 100; ++i)
+    {
+      if (!digitalRead(RESETBUTTON_PIN))
+      {
+        resetPressed++;
+      }
+    }
+    if (resetPressed > 50)
+    {
+      Serial.println("Reset Button Pressed");
+      resetAllSettings();
+    }
+
+    // Restore pin modes
+    pinMode(RESETBUTTON_PIN, OUTPUT);
+  }
+#endif
+  /*******************************************************************/
+
   /*********************** Configuration Manager *********************/
   {
     // Init SPIFFS
@@ -279,7 +304,7 @@ void setup(void)
     configManager.saveCheckWifiManager();
 
     // Setup multi DNS (Bonjour)
-    if (MDNS.begin(configManager.getConfig().name))
+    if (MDNS.begin(String("blind-") + configManager.getConfig().name))
     {
       Serial.println("MDNS responder started");
       MDNS.addService("http", "tcp", 80);
@@ -290,7 +315,7 @@ void setup(void)
       Serial.println("Error setting up MDNS responder!");
       waitAndReboot();
     }
-    Serial.print("Connect to http://" + String(configManager.getConfig().name) +
+    Serial.print("Connect to http://blind-" + String(configManager.getConfig().name) +
                  ".local or http://");
     Serial.println(WiFi.localIP());
   }
@@ -366,31 +391,6 @@ void setup(void)
   blind.setReachedTargetCallback(saveBlindState);
   Serial.printf("Maxpos %d\n", configManager.getConfig().blindMaxPos);
 /*******************************************************************/
-
-/***************************** Do Reset? ***************************/
-#ifdef USE_RESET_BTN
-  {
-    pinMode(RESETBUTTON_PIN, INPUT);
-
-    int resetPressed = 0;
-    for (int i = 0; i < 100; ++i)
-    {
-      if (!digitalRead(RESETBUTTON_PIN))
-      {
-        resetPressed++;
-      }
-    }
-    if (resetPressed > 50)
-    {
-      Serial.println("Reset Button Pressed");
-      resetAllSettings();
-    }
-
-    // Restore pin modes
-    pinMode(D3, OUTPUT);
-  }
-#endif
-  /*******************************************************************/
 
   // Turn off built-in LED
   pinMode(LED_BUILTIN, OUTPUT);

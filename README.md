@@ -1,7 +1,3 @@
-# OBS. This project has been completely rebuilt from the button up! Although this README is not revised. Most of the functionality described should still apply. Original project by nidayand
-
-**This repo has been archived as a complete redesign is on its way - including physical components**
-
 # motor-on-roller-blind-ws
 WebSocket based version of [motor-on-roller-blind](https://github.com/nidayand/motor-on-roller-blind). I.e. there is no need of an MQTT server but MQTT is supported as well - you can control it with WebSockets and/or with MQTT messages.
 
@@ -9,9 +5,11 @@ WebSocket based version of [motor-on-roller-blind](https://github.com/nidayand/m
 
  1. A tiny webserver is setup on the esp8266 that will serve one page to the client
  2. Upon powering on the first time WIFI credentials, a hostname and - optional - MQTT server details is to be configured. You can specify if you want **clockwise (CW) rotation** to close the blind and you can also specify **MQTT authentication** if required. Connect your computer to a new WIFI hotspot named **BlindsConnectAP**. Password = **nidayand**
+ 3. Login to WiFiManager at 192.168.4.1
+ 4. Enter setup information (wifi credentials, device name, MQTT server info).  Device name will be automatically prefixed with 'blind-'.
  3. Connect to your normal WIFI with your client and go to the IP address of the device - or if you have an mDNS supported device (e.g. iOS, OSX or have Bonjour installed) you can go to http://{hostname}.local. If you don't know the IP-address of the device check your router for the leases (or check the serial console in the Arduino IDE or check the `/raw/esp8266/register` MQTT message if you are using an MQTT server)
  4. As the webpage is loaded it will connect through a websocket directly to the device to progress updates and to control the device. If any other client connects the updates will be in sync.
- 5. Go to the Settings page to calibrate the motor with the start and end positions of the roller blind. Follow the instructions on the page
+ 5. Go to the Settings page to calibrate the motor with the start and end positions of the roller blind. Follow the instructions on the page.
 
 ## Flashing
 This project is set-up in plattformIO (VSCode) but there is no need to pull the source code and build the project yourself. A binary is available in the *bin* folder. To flash it use esptool and run the following command:
@@ -21,7 +19,7 @@ This project is set-up in plattformIO (VSCode) but there is no need to pull the 
 As well as providing flashing through wifi (ArduinoOTA) a binary can also be uploaded to the board via *http://board_name:82/*. 
 
 ## Reset
-To reset the board settings you can hold in the Flash button on the board slightly **after** powering it. Keep holding it in for a few seconds and the board will reboot itself when done and publish its SSID.
+To reset the board settings you can ground D5 for a few seconds while powering it up.  The board will reboot itself when done and publish its SSID.
 
 ## MQTT
 - When it connects to WIFI and MQTT it will send a "register" message to topic `/raw/esp8266/register` with a payload containing chip-id and IP-address
@@ -32,6 +30,7 @@ To reset the board settings you can hold in the Flash button on the board slight
 Simply do not enter any string in the MQTT server form field upon WIFI configuration of the device (step 3 above)
 
 ### Payload options
+Publish to `blind/[device-name]/in` with one of the following payloads:
 - ***(start)*** - (calibrate) Sets the current position as top position
 - ***(max)*** - (calibrate) Sets the current position as max position. Set `start` before you define `max` as `max` is a relative position to `start`
 - ***(0)*** - (manual mode) Will stop the curtain
@@ -39,7 +38,7 @@ Simply do not enter any string in the MQTT server form field upon WIFI configura
 - ***(1)***- (manual mode) Will close the curtain. Requires `(0)` to stop the motor
 - ***0-100*** - (auto mode) A number between 0-100 to set % of opened blind. Requires calibration before use. E.g. `50` will open it to 50%
 - ***downspeed/x*** 5 by default. This will be stored in flash
-- ***upspeed/x*** 5 by default. Tis will be stored in flash
+- ***upspeed/x*** 5 by default. This will be stored in flash
 
 ## Required libraries (3rd party)
 *All* required libraries are included as git submodules. Clone this library with submodules.

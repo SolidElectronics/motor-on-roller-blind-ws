@@ -33,6 +33,12 @@ String INDEX_HTML = R"(<!DOCTYPE html>
   var instr = function(action){
     doSend('('+action+')');
   };
+  var setDownSpeed = function(speed){
+    doSend('downspeed/'+speed);
+  }
+  var setUpSpeed = function(speed){
+    doSend('upspeed/'+speed);
+  }
 
   var setActions = function(){
     doSend('(update)');
@@ -54,6 +60,9 @@ String INDEX_HTML = R"(<!DOCTYPE html>
       $('#arrow-stop-man').on('click', function(){instr('0')});
       $('#set-start').on('click', function(){instr('start')});
       $('#set-max').on('click', function(){instr('max');});
+
+      $('#upspeed').on('change', function(){setUpSpeed($('#upspeed').val());});
+      $('#downspeed').on('change', function(){setDownSpeed($('#downspeed').val());});
 
     }, 200);
   };
@@ -212,7 +221,62 @@ String INDEX_HTML = R"(<!DOCTYPE html>
       <ons-col style='text-align:center'><ons-icon id='arrow-stop-man' icon='fa-stop' size='2x'></ons-icon></ons-col>
       <ons-col style='text-align:center'><ons-icon id='arrow-down-man' icon='fa-arrow-down' size='2x'></ons-icon></ons-col>
     </ons-row>
+    <ons-row style='width:100%'>
+      <ons-col style='text-align:center'>
+        Up speed&nbsp;
+        <ons-select id="upspeed">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+          <option value="11">11</option>
+          <option value="12">12</option>
+          <option value="13">13</option>
+          <option value="14">14</option>
+          <option value="15">15</option>
+          <option value="16">16</option>
+          <option value="17">17</option>
+          <option value="18">18</option>
+          <option value="19">19</option>
+          <option value="20">20</option>
+        </ons-select>
+      </ons-col>
+      <ons-col style='text-align:center'></ons-col>
+      <ons-col style='text-align:center'>
+        Down speed&nbsp;
+        <ons-select id="downspeed">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+          <option value="11">11</option>
+          <option value="12">12</option>
+          <option value="13">13</option>
+          <option value="14">14</option>
+          <option value="15">15</option>
+          <option value="16">16</option>
+          <option value="17">17</option>
+          <option value="18">18</option>
+          <option value="19">19</option>
+          <option value="20">20</option>
+        </ons-select>
+      </ons-col>
+    </ons-row>
+
   </ons-card>
+
   <ons-card>
     <div class='title'>Store</div>
     <ons-row style='width:100%'>

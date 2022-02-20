@@ -41,7 +41,7 @@ String APpw = "nidayand";        // Hardcoded password for access point
 
 //----------------------------------------------------
 
-String version = "1.5.1";
+String version = "1.6.0";
 
 // WiFi and Mqtt
 WiFiClient espClient;

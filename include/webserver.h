@@ -16,7 +16,7 @@ public:
   }
   void setup();
 
-  void updatePage(String version, String name, String upspeed, String downspeed);
+  void updatePage(String version, String name, String upspeed, String downspeed, bool inverted);
 
 private:
   WebServer();

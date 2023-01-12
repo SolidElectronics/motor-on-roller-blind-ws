@@ -148,6 +148,15 @@ void processMsg(String msg, uint8_t clientNum)
     {
       blind.setSpeed(payload.toInt(), Blind::Direction::UP);
     }
+    else if (topic == "invert")
+    {
+      if (payload.toInt() == 0) {
+        blind.setInverted(false);
+      }
+      if (payload.toInt() == 1) {
+        blind.setInverted(true);
+      }
+    }
   }
   else if (msg == "(0)")
   {
@@ -356,7 +365,7 @@ void setup(void)
   Serial.println("Websockets are set up");
   // Update webpage
   Serial.println("Settings up web page");
-  webServer.updatePage(version, String(configManager.getConfig().name), String(configManager.getConfig().speedUp), String(configManager.getConfig().speedDown));
+  webServer.updatePage(version, String(configManager.getConfig().name), String(configManager.getConfig().speedUp), String(configManager.getConfig().speedDown), configManager.getConfig().directionInverted);
   /*******************************************************************/
 
   /*************************** OTA Setup *****************************/

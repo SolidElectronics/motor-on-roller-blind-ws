@@ -39,6 +39,9 @@ String INDEX_HTML = R"(<!DOCTYPE html>
   var setUpSpeed = function(speed){
     doSend('upspeed/'+speed);
   }
+  var setInvert = function(invert){
+    doSend('invert/'+invert)
+  }
 
   var setActions = function(){
     doSend('(update)');
@@ -63,6 +66,7 @@ String INDEX_HTML = R"(<!DOCTYPE html>
 
       $('#upspeed').on('change', function(){setUpSpeed($('#upspeed').val());});
       $('#downspeed').on('change', function(){setDownSpeed($('#downspeed').val());});
+      $('#invert').on('change', function(){setInvert($('#invert').val());});
 
     }, 200);
   };
@@ -220,6 +224,16 @@ String INDEX_HTML = R"(<!DOCTYPE html>
       <ons-col style='text-align:center'><ons-icon id='arrow-up-man' icon='fa-arrow-up' size='2x'></ons-icon></ons-col>
       <ons-col style='text-align:center'><ons-icon id='arrow-stop-man' icon='fa-stop' size='2x'></ons-icon></ons-col>
       <ons-col style='text-align:center'><ons-icon id='arrow-down-man' icon='fa-arrow-down' size='2x'></ons-icon></ons-col>
+    </ons-row>
+    <ons-row style='width:100%'>
+      <ons-col style='text-align:center'>
+        Invert direction ({INVERTED})&nbsp;
+        <ons-select id="invert">
+          <option value="-1"></option>
+          <option value="0">True</option>
+          <option value="1">False</option>
+        </ons-select>
+      </ons-col>
     </ons-row>
     <ons-row style='width:100%'>
       <ons-col style='text-align:center'>

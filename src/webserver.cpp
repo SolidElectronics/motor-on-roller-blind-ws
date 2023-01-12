@@ -38,8 +38,10 @@ void WebServer::setup()
   onNotFound(handleNotFound);
 }
 
-void WebServer::updatePage(String version, String name)
+void WebServer::updatePage(String version, String name, String upspeed, String downspeed)
 {
   INDEX_HTML.replace("{VERSION}", "V" + version);
   INDEX_HTML.replace("{NAME}", name);
+  INDEX_HTML.replace("{UPSPEED}", upspeed);
+  INDEX_HTML.replace("{DOWNSPEED}", downspeed);
 }

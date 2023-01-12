@@ -76,11 +76,11 @@ void MyMqtt::setCallback(MQTT_CALLBACK_SIGNATURE)
 
 void MyMqtt::reconnect()
 {
-  reconnect(String(NULL), String(NULL));
+  reconnect(String(""), String(""));
 }
 void MyMqtt::reconnect(std::list<const char *> topics)
 {
-  reconnect(String(NULL), String(NULL), topics);
+  reconnect(String(""), String(""), topics);
 }
 void MyMqtt::reconnect(String uid, String pwd)
 {

@@ -30,8 +30,8 @@ public:
   //!                    or was at upon last save
   //! @param maxStep     Num of steps from closed to open
   //! @param inverted    Dir of motor
-  //! @param speedUp     RPM of the blinder Upwards
-  //! @param speedDown   RPM of the blinder Downwards
+  //! @param speedUp     RPM of the blind upwards
+  //! @param speedDown   RPM of the blind downwards
   void correctData(long currentStep, long maxStep, bool inverted, long speedUp, long speedDown);
 
   //! Move blind to position
@@ -80,7 +80,7 @@ public:
   //! depending on the current state and objective
   void run();
 
-  //! Set the speed of the blinder
+  //! Set the speed of the blind
   //! @param rpm Revolutions per minute of the motor
   //!            Defaults to 5. A too high value will just stall
   void setSpeed(long rpm);

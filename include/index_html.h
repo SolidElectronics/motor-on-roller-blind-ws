@@ -223,7 +223,7 @@ String INDEX_HTML = R"(<!DOCTYPE html>
     </ons-row>
     <ons-row style='width:100%'>
       <ons-col style='text-align:center'>
-        Up speed&nbsp;
+        Up speed ({UPSPEED})&nbsp;
         <ons-select id="upspeed">
           <option value="1">1</option>
           <option value="2">2</option>
@@ -249,7 +249,7 @@ String INDEX_HTML = R"(<!DOCTYPE html>
       </ons-col>
       <ons-col style='text-align:center'></ons-col>
       <ons-col style='text-align:center'>
-        Down speed&nbsp;
+        Down speed ({DOWNSPEED})&nbsp;
         <ons-select id="downspeed">
           <option value="1">1</option>
           <option value="2">2</option>

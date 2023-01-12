@@ -220,7 +220,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
 {
   Serial.printf("Message arrived [%s]\n", topic);
   String res = "";
-  for (int i = 0; i < length; i++)
+  for (uint i = 0; i < length; i++)
   {
     res += String((char)payload[i]);
   }
@@ -356,7 +356,7 @@ void setup(void)
   Serial.println("Websockets are set up");
   // Update webpage
   Serial.println("Settings up web page");
-  webServer.updatePage(version, String(configManager.getConfig().name));
+  webServer.updatePage(version, String(configManager.getConfig().name), String(configManager.getConfig().speedUp), String(configManager.getConfig().speedDown));
   /*******************************************************************/
 
   /*************************** OTA Setup *****************************/
@@ -397,7 +397,7 @@ void setup(void)
   sendPosUpdate();
   blind.setPosUpdateCallback(sendPosUpdate);
   blind.setReachedTargetCallback(saveBlindState);
-  Serial.printf("Maxpos %d\n", configManager.getConfig().blindMaxPos);
+  Serial.printf("Maxpos %ld\n", configManager.getConfig().blindMaxPos);
 /*******************************************************************/
 
   // Turn off built-in LED

@@ -45,7 +45,7 @@ void WebServer::updatePage(String version, String name, String upspeed, String d
   INDEX_HTML.replace("{UPSPEED}", upspeed);
   INDEX_HTML.replace("{DOWNSPEED}", downspeed);
 
-  if (inverted) {
+  if (inverted == true) {
     INDEX_HTML.replace("{INVERTED}", String("true"));
   } else {
     INDEX_HTML.replace("{INVERTED}", String("false"));

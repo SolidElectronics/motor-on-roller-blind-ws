@@ -40,7 +40,7 @@ String INDEX_HTML = R"(<!DOCTYPE html>
     doSend('upspeed/'+speed);
   }
   var setInvert = function(invert){
-    doSend('invert/'+invert)
+    doSend('invert/'+invert);
   }
 
   var setActions = function(){

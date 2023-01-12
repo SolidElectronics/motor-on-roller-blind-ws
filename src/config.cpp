@@ -197,7 +197,8 @@ bool ConfigManager::printConfig()
 
 bool ConfigManager::reset()
 {
-  return SPIFFS.format();
+  SPIFFS.format();
+  return true;
 }
 
 Config &ConfigManager::getConfig()

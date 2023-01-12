@@ -143,18 +143,22 @@ void processMsg(String msg, uint8_t clientNum)
     if (topic == "downspeed")
     {
       blind.setSpeed(payload.toInt(), Blind::Direction::DOWN);
+      configManager.saveConfig();
     }
     else if (topic == "upspeed")
     {
       blind.setSpeed(payload.toInt(), Blind::Direction::UP);
+      configManager.saveConfig();
     }
     else if (topic == "invert")
     {
       if (payload.toInt() == 0) {
         blind.setInverted(false);
+        configManager.saveConfig();
       }
       if (payload.toInt() == 1) {
         blind.setInverted(true);
+        configManager.saveConfig();
       }
     }
   }

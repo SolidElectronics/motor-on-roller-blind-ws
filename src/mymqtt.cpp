@@ -107,6 +107,7 @@ void MyMqtt::reconnect(String uid, String pwd, std::list<const char *> topics)
   {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
+    // TODO: LWT message would go here
     if ((mqttLogon ? m_pPsclient->connect(m_clientId.c_str(), uid.c_str(), pwd.c_str())
                    : m_pPsclient->connect(m_clientId.c_str())))
     {
@@ -187,7 +188,7 @@ void MyMqtt::run()
     Serial.println("Mqtt ticker...");
     MyMqtt::publishStatePending = false;
     publish(m_lastTopicOutMsg);
-    publish(m_baseTopic + "availability", "1");
+    publish(m_baseTopic + "availability", "online");
   }
 }
 

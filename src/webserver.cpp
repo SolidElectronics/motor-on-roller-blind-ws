@@ -40,6 +40,7 @@ void WebServer::setup()
 
 void WebServer::updatePage(String version, String name, String upspeed, String downspeed, bool inverted)
 {
+  Serial.println("Updating web page");
   INDEX_HTML.replace("{VERSION}", "V" + version);
   INDEX_HTML.replace("{NAME}", name);
   INDEX_HTML.replace("{UPSPEED}", upspeed);

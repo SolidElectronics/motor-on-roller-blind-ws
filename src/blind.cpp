@@ -200,6 +200,7 @@ void Blind::setSpeed(long rpm, Direction dir)
 {
   Serial.printf("Setting new %s direction speed to: %ld",
                 (dir == Direction::UP) ? "upward" : "downward", rpm);
+  Serial.println();
   switch (dir)
   {
   case Direction::UP:

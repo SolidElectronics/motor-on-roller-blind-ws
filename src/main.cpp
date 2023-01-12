@@ -134,30 +134,35 @@ void updateBlindState()
 //!                  Increments for each connected client
 void processMsg(String msg, uint8_t clientNum)
 {
-  int delimiterPos = msg.indexOf('/');
+  int delimiterPos = msg.indexOf('=');
   if (delimiterPos != -1)
   {
     String topic = msg.substring(0, delimiterPos);
     String payload = msg.substring(delimiterPos + 1, msg.length());
-    Serial.printf("topic: %s, payload: %s\n", topic.c_str(), payload.c_str());
+    Serial.printf("topic: %s, payload: %s", topic.c_str(), payload.c_str());
+    Serial.println();
     if (topic == "downspeed")
     {
       blind.setSpeed(payload.toInt(), Blind::Direction::DOWN);
+      configManager.getConfig().speedDown = blind.getSpeed(Blind::Direction::DOWN);
       configManager.saveConfig();
     }
     else if (topic == "upspeed")
     {
       blind.setSpeed(payload.toInt(), Blind::Direction::UP);
+      configManager.getConfig().speedUp = blind.getSpeed(Blind::Direction::UP);
       configManager.saveConfig();
     }
     else if (topic == "invert")
     {
       if (payload.toInt() == 0) {
         blind.setInverted(false);
+        configManager.getConfig().directionInverted = blind.getInverted();
         configManager.saveConfig();
       }
       if (payload.toInt() == 1) {
         blind.setInverted(true);
+        configManager.getConfig().directionInverted = blind.getInverted();
         configManager.saveConfig();
       }
     }
@@ -199,6 +204,10 @@ void processMsg(String msg, uint8_t clientNum)
   {
     resetAllSettings();
   }
+  else if (msg == "REBOOT")
+  {
+    ESP.restart();
+  }
   else // TODO: fault tolerant else
   {
     /*
@@ -231,7 +240,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
 //! Handle MQTT messages
 void mqttCallback(char *topic, byte *payload, unsigned int length)
 {
-  Serial.printf("Message arrived [%s]\n", topic);
+  Serial.printf("Message arrived [%s]", topic);
+  Serial.println();
   String res = "";
   for (uint i = 0; i < length; i++)
   {
@@ -368,7 +378,7 @@ void setup(void)
   webSocket.onEvent(webSocketEvent);
   Serial.println("Websockets are set up");
   // Update webpage
-  Serial.println("Settings up web page");
+  Serial.println("Setting up web page");
   webServer.updatePage(version, String(configManager.getConfig().name), String(configManager.getConfig().speedUp), String(configManager.getConfig().speedDown), configManager.getConfig().directionInverted);
   /*******************************************************************/
 

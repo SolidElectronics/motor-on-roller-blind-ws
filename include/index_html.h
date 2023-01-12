@@ -34,13 +34,13 @@ String INDEX_HTML = R"(<!DOCTYPE html>
     doSend('('+action+')');
   };
   var setDownSpeed = function(speed){
-    doSend('downspeed/'+speed);
+    doSend('downspeed='+speed);
   }
   var setUpSpeed = function(speed){
-    doSend('upspeed/'+speed);
+    doSend('upspeed='+speed);
   }
   var setInvert = function(invert){
-    doSend('invert/'+invert);
+    doSend('invert='+invert);
   }
 
   var setActions = function(){

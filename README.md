@@ -37,10 +37,11 @@ Publish to `blind/[device-name]/in` with one of the following payloads:
 - ***(-1)*** - (manual mode) Will open the curtain. Requires `(0)` to stop the motor
 - ***(1)***- (manual mode) Will close the curtain. Requires `(0)` to stop the motor
 - ***0-100*** - (auto mode) A number between 0-100 to set % of covering. Requires calibration before use. 0% is fully open (this is backwards from Home Assistant).
-- ***downspeed/x*** 5 by default. This will be stored in flash
-- ***upspeed/x*** 5 by default. This will be stored in flash
-- ***invert/x*** 0 or 1 for regular or inverted mode. This will be stored in flash
+- ***REBOOT*** - Reboot.
 - ***RESET-CONFIG*** - Reset configuration, will reboot into WiFiManager AP mode.
+- ***downspeed=x*** 5 by default. This will be stored in flash
+- ***upspeed=x*** 5 by default. This will be stored in flash
+- ***invert=x*** 0 or 1 for regular or inverted mode. This will be stored in flash
 
 ## Required libraries (3rd party)
 *All* required libraries are included as git submodules. Clone this library with submodules.

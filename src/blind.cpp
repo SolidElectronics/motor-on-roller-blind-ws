@@ -34,7 +34,7 @@ void Blind::correctData(long currentStep, long maxStep, bool inverted, long spee
 void Blind::setPosition(uint8_t position)
 {
   m_targetPosStep = m_maxStep * position / 100;
-  Serial.printf("New target: %d% at step %d\n", position, m_targetPosStep);
+  Serial.printf("New target: %d%% at step %ld\n", position, m_targetPosStep);
   m_mode = Mode::AUTO;
   m_dir = (m_posStep < m_targetPosStep) ? Direction::DOWN : Direction::UP;
 }
@@ -108,7 +108,7 @@ void Blind::stop()
   m_targetPosStep = m_posStep;
   m_mode = Mode::REST;
   restCoils();
-  Serial.printf("Stopped at pos %d and step %d\n", m_position, m_posStep);
+  Serial.printf("Stopped at pos %d%% and step %ld\n", m_position, m_posStep);
 }
 
 void Blind::setPosUpdateCallback(void (*callback)(int, int))
@@ -160,7 +160,7 @@ bool Blind::step(long steps, Direction dir, Mode mode)
   // Logic to work even with negative maxStep
   if (mode == Mode::AUTO && (abs(m_posStep + steps) < 0 || abs(m_posStep + steps) > abs(m_maxStep)))
   {
-    Serial.printf("Trying to overstep. Step: %d, TargetStep: %d, MaxStep: %d\n", m_posStep,
+    Serial.printf("Trying to overstep. Step: %ld, TargetStep: %ld, MaxStep: %ld\n", m_posStep,
                   m_targetPosStep, m_maxStep);
     stop();
     return false;
@@ -198,7 +198,7 @@ void Blind::setSpeed(long rpm)
 
 void Blind::setSpeed(long rpm, Direction dir)
 {
-  Serial.printf("Setting new %s direction speed to: %d",
+  Serial.printf("Setting new %s direction speed to: %ld",
                 (dir == Direction::UP) ? "upward" : "downward", rpm);
   switch (dir)
   {

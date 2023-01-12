@@ -41,7 +41,7 @@ String APpw = "nidayand";        // Hardcoded password for access point
 
 //----------------------------------------------------
 
-String version = "1.6.0";
+String version = "1.7.0";
 
 // WiFi and Mqtt
 WiFiClient espClient;
@@ -181,6 +181,10 @@ void processMsg(String msg, uint8_t clientNum)
   else if (msg == "(save)")
   {
     saveBlindState();
+  }
+  else if (msg == "RESET-CONFIG")
+  {
+    resetAllSettings();
   }
   else // TODO: fault tolerant else
   {

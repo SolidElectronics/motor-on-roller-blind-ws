@@ -4,10 +4,14 @@
 
 #define STEPS 2038 // the number of steps in one revolution (28BYJ-48)
 
-My28BYJ48::My28BYJ48()
-: Stepper(STEPS, D1, D2, D3, D4)
-{
-}
+// Set one of these in the build target in platformio.ini depending on the wiring config
+#ifdef MOTOR_WIRE_1324
+My28BYJ48::My28BYJ48() : Stepper(STEPS, D1, D3, D2, D4) {}
+#endif
+
+#ifdef MOTOR_WIRE_1234
+My28BYJ48::My28BYJ48() : Stepper(STEPS, D1, D2, D3, D4) {}
+#endif
 
 void My28BYJ48::setSpeed(long rpm)
 {

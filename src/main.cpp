@@ -328,7 +328,13 @@ void setup(void)
 
     // Set the WiFi SSID and passwd to use if in AP mode
     wifiManager.setSaveConfigCallback(setNeedSaving);
-    wifiManager.autoConnect(APid.c_str(), APpw.c_str());
+
+    // Try saved AP, fallback to config AP for five minutes, then reboot 
+    wifiManager.setConnectTimeout(15);
+    wifiManager.setConfigPortalTimeout(300);
+    if (!wifiManager.autoConnect(APid.c_str(), APpw.c_str())) {
+      ESP.restart();
+    }
 
     // Check if WifiManager triggered a save
     // This needs to be done if config has been updated

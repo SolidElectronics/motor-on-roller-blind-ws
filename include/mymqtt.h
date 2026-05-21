@@ -35,6 +35,9 @@ public:
   //! Reconnect without authentication
   void reconnect();
 
+  // Disconnect (send offline availability topic)
+  void disconnect();
+
   //! Reconnect without authentication
   //! Subscribe to some topics
   //! @param topics Topics to subscribe to

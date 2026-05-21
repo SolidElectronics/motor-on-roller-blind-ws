@@ -31,13 +31,13 @@ Simply do not enter any string in the MQTT server form field upon WIFI configura
 
 ### Payload options
 Publish to `blind/[device-name]/in` with one of the following payloads:
+- ***(REBOOT)*** - Reboot.
 - ***(start)*** - (calibrate) Sets the current position as top position
 - ***(max)*** - (calibrate) Sets the current position as max position. Set `start` before you define `max` as `max` is a relative position to `start`
 - ***(0)*** - (manual mode) Will stop the curtain
 - ***(-1)*** - (manual mode) Will open the curtain. Requires `(0)` to stop the motor
 - ***(1)***- (manual mode) Will close the curtain. Requires `(0)` to stop the motor
 - ***0-100*** - (auto mode) A number between 0-100 to set % of covering. Requires calibration before use. 0% is fully open (this is backwards from Home Assistant).
-- ***REBOOT*** - Reboot.
 - ***RESET-CONFIG*** - Reset configuration, will reboot into WiFiManager AP mode.
 - ***downspeed=x*** 5 by default. This will be stored in flash
 - ***upspeed=x*** 5 by default. This will be stored in flash

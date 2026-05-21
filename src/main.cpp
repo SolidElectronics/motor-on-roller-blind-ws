@@ -46,7 +46,6 @@ String version = "1.7.0";
 // WiFi and Mqtt
 WiFiClient espClient;
 
-
 WebOTA webOTA;
 
 // Configuration in web interface
@@ -200,13 +199,15 @@ void processMsg(String msg, uint8_t clientNum)
   {
     saveBlindState();
   }
+  else if (msg == "(reboot)")
+  {
+    myMqtt.disconnect();
+    delay(500);
+    ESP.restart();
+  }
   else if (msg == "RESET-CONFIG")
   {
     resetAllSettings();
-  }
-  else if (msg == "REBOOT")
-  {
-    ESP.restart();
   }
   else // TODO: fault tolerant else
   {

@@ -63,6 +63,7 @@ String INDEX_HTML = R"(<!DOCTYPE html>
       $('#arrow-stop-man').on('click', function(){instr('0')});
       $('#set-start').on('click', function(){instr('start')});
       $('#set-max').on('click', function(){instr('max');});
+      $('#reboot').on('click', function(){instr('reboot');});
 
       $('#upspeed').on('change', function(){setUpSpeed($('#upspeed').val());});
       $('#downspeed').on('change', function(){setDownSpeed($('#downspeed').val());});
@@ -299,6 +300,14 @@ String INDEX_HTML = R"(<!DOCTYPE html>
       <ons-col style='text-align:center'><ons-button id='set-max'>Set Max</ons-button></ons-col>
     </ons-row>
   </ons-card>
+
+  <ons-card>
+    <div class='title'>Device</div>
+    <ons-row style='width:100%'>
+      <ons-col style='text-align:center'><ons-button id='reboot'>Reboot</ons-button></ons-col>
+    </ons-row>
+  </ons-card>
+
   </ons-page>
 </template>
 

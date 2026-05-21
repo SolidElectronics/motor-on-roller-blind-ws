@@ -74,6 +74,12 @@ void MyMqtt::setCallback(MQTT_CALLBACK_SIGNATURE)
   m_pPsclient->setCallback(callback);
 }
 
+void MyMqtt::disconnect()
+{
+  publish(m_baseTopic + "availability", "offline");
+  m_pPsclient->disconnect();
+}
+
 void MyMqtt::reconnect()
 {
   reconnect(String(""), String(""));
